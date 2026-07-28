@@ -893,10 +893,10 @@
 
     <div class="settle-box" id="settleBox"></div>
 
-    <!-- <div class="footer-row">
+     <div class="footer-row">
       <span class="status" id="statusMsg">&nbsp;</span>
-      <button class="reset-link" id="resetBtn">امسح كل الحساب</button>
-    </div> -->
+      <button class="reset-link hidden" id="resetBtn" type="button" disabled>امسح كل الحساب</button>
+    </div>   
   </div>
 </div>
 
@@ -1909,6 +1909,8 @@ addBtn.onclick = async ()=>{
 };
 
 resetBtn.onclick = async ()=>{
+  // مؤقتًا: زر مسح كل الحساب متوقف
+  return;
   if(!confirm('متأكد إنك عايز تمسح كل الحساب؟ الخطوة دي هتتم على كل الأجهزة.')) return;
   try{
     await clearAllExpenses();
