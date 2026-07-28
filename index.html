@@ -977,6 +977,7 @@ async function fetchExpenses(tabId){
     .from('expenses')
     .select('id, payer, item_desc, amount, ts')
     .eq('tab_id', tabId)
+    .is('deleted_at', null)
     .order('ts', { ascending:false });
   if(error) throw error;
   return (data || []).map(normalizeExpense);
@@ -1209,9 +1210,10 @@ async function deleteExpense(id){
   const client = await ensureSupabase();
   const { error } = await client
     .from('expenses')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('tab_id', currentTab.id)
-    .eq('id', id);
+    .eq('id', id)
+    .is('deleted_at', null);
   if(error) throw error;
   await refreshCurrentTabData();
   setBanner('تم الحذف والمزامنة بنجاح.', 'success');
@@ -1223,8 +1225,9 @@ async function clearAllExpenses(){
   setBanner('جاري مسح كل الحساب...', 'info');
   const { error } = await client
     .from('expenses')
-    .delete()
-    .eq('tab_id', currentTab.id);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('tab_id', currentTab.id)
+    .is('deleted_at', null);
   if(error) throw error;
   await refreshCurrentTabData();
   setBanner('تم مسح كل الحساب من الجلسة.', 'success');

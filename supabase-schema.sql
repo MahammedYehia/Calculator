@@ -18,13 +18,18 @@ create table if not exists public.expenses (
   item_desc text not null default '',
   amount numeric(12,2) not null,
   ts bigint not null,
+  deleted_at timestamptz null,
   created_at timestamptz not null default now(),
   constraint expenses_payer_check check (payer in ('a', 'b')),
   constraint expenses_amount_positive check (amount > 0)
 );
 
+alter table public.expenses
+add column if not exists deleted_at timestamptz null;
+
 create index if not exists expenses_tab_id_idx on public.expenses(tab_id);
 create index if not exists expenses_tab_id_ts_idx on public.expenses(tab_id, ts desc);
+create index if not exists expenses_tab_id_deleted_at_idx on public.expenses(tab_id, deleted_at);
 
 create or replace function public.set_updated_at()
 returns trigger
