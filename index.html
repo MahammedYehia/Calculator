@@ -512,6 +512,131 @@
     font-family:'JetBrains Mono', monospace;
   }
 
+  @media (max-width: 640px){
+    body{
+      padding:12px 8px 28px;
+      align-items:flex-start;
+    }
+    .receipt{
+      max-width:none;
+      padding:24px 16px 22px;
+      box-shadow:0 10px 24px -18px rgba(0,0,0,0.45);
+    }
+    .brand .mark{
+      width:36px;
+      height:36px;
+      margin-bottom:8px;
+    }
+    .brand h1{
+      font-size:18px;
+    }
+    .brand p{
+      font-size:11px;
+      line-height:1.6;
+    }
+    .sync-warning{
+      font-size:10.5px;
+      padding:7px 9px;
+      line-height:1.7;
+    }
+    .setup label,
+    .me-row,
+    .field-row input,
+    .line,
+    .totals,
+    .grand{
+      font-size:13px;
+    }
+    .btn-main,
+    .btn-secondary,
+    .add-btn,
+    .paste-toggle,
+    .payer-btn{
+      min-height:44px;
+    }
+    .join-row,
+    .field-row,
+    .payer-row,
+    .footer-row,
+    .session-head,
+    .me-row{
+      flex-direction:column;
+      align-items:stretch;
+    }
+    .join-row button,
+    .field-row input#desc,
+    .field-row input#amount{
+      flex:1 1 auto;
+      width:100%;
+    }
+    .session-head{
+      gap:6px;
+    }
+    .session-head button,
+    .session-actions{
+      text-align:right;
+    }
+    .session-link-note{
+      word-break:break-word;
+    }
+    .me-row{
+      gap:8px;
+    }
+    .me-row button{
+      align-self:flex-start;
+      padding:0;
+    }
+    .paste-box{
+      padding:9px;
+    }
+    .paste-box textarea{
+      min-height:92px;
+      font-size:11px;
+    }
+    .line{
+      align-items:flex-start;
+      gap:8px;
+    }
+    .line-left{
+      flex:1;
+      min-width:0;
+    }
+    .line-desc{
+      max-width:none;
+      white-space:normal;
+      line-height:1.5;
+    }
+    .line-right{
+      flex-shrink:0;
+      gap:8px;
+    }
+    .stamp-wrap{
+      margin:22px 0 4px;
+    }
+    .stamp{
+      width:140px;
+      height:140px;
+      padding:12px;
+    }
+    .stamp .who{
+      font-size:13px;
+    }
+    .stamp .amt{
+      font-size:19px;
+    }
+    .footer-row{
+      gap:10px;
+    }
+    .status{
+      order:2;
+      text-align:center;
+    }
+    .reset-link{
+      order:1;
+      align-self:center;
+    }
+  }
+
   .hidden{ display:none !important; }
 </style>
 </head>
