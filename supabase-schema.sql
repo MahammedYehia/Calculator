@@ -31,6 +31,26 @@ create index if not exists expenses_tab_id_idx on public.expenses(tab_id);
 create index if not exists expenses_tab_id_ts_idx on public.expenses(tab_id, ts desc);
 create index if not exists expenses_tab_id_deleted_at_idx on public.expenses(tab_id, deleted_at);
 
+create table if not exists public.loans (
+  id text primary key,
+  tab_id uuid not null references public.shared_tabs(id) on delete cascade,
+  lender text not null,
+  borrower text not null,
+  item_desc text not null default '',
+  amount numeric(12,2) not null,
+  ts bigint not null,
+  deleted_at timestamptz null,
+  created_at timestamptz not null default now(),
+  constraint loans_lender_check check (lender in ('a', 'b')),
+  constraint loans_borrower_check check (borrower in ('a', 'b')),
+  constraint loans_different_parties check (lender <> borrower),
+  constraint loans_amount_positive check (amount > 0)
+);
+
+create index if not exists loans_tab_id_idx on public.loans(tab_id);
+create index if not exists loans_tab_id_ts_idx on public.loans(tab_id, ts desc);
+create index if not exists loans_tab_id_deleted_at_idx on public.loans(tab_id, deleted_at);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -49,6 +69,7 @@ execute function public.set_updated_at();
 
 alter table public.shared_tabs enable row level security;
 alter table public.expenses enable row level security;
+alter table public.loans enable row level security;
 
 drop policy if exists "anon can read shared_tabs" on public.shared_tabs;
 create policy "anon can read shared_tabs"
@@ -107,3 +128,51 @@ on public.expenses
 for delete
 to anon, authenticated
 using (true);
+
+drop policy if exists "anon can read loans" on public.loans;
+create policy "anon can read loans"
+on public.loans
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "anon can insert loans" on public.loans;
+create policy "anon can insert loans"
+on public.loans
+for insert
+to anon, authenticated
+with check (true);
+
+drop policy if exists "anon can update loans" on public.loans;
+create policy "anon can update loans"
+on public.loans
+for update
+to anon, authenticated
+using (true)
+with check (true);
+
+drop policy if exists "anon can delete loans" on public.loans;
+create policy "anon can delete loans"
+on public.loans
+for delete
+to anon, authenticated
+using (true);
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.expenses;
+  exception
+    when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.loans;
+  exception
+    when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.shared_tabs;
+  exception
+    when duplicate_object then null;
+  end;
+end $$;

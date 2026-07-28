@@ -424,6 +424,34 @@
     font-size:13px;
     padding:18px 0;
   }
+  .loan-section{
+    margin-top:4px;
+  }
+  .loan-summary{
+    margin-top:10px;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.7;
+  }
+  .loan-summary strong{
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    direction:ltr;
+    display:inline-block;
+  }
+  .loan-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .loan-actions .add-btn{
+    margin-top:0;
+    flex:1;
+  }
+  .loan-actions .add-btn.borrow{
+    background:var(--ink);
+  }
 
   /* summary */
   .totals{
@@ -608,13 +636,20 @@
       white-space:normal;
       line-height:1.5;
     }
-    .line-right{
-      flex-shrink:0;
-      gap:8px;
-    }
-    .stamp-wrap{
-      margin:22px 0 4px;
-    }
+      .line-right{
+        flex-shrink:0;
+        gap:8px;
+      }
+      .loan-actions{
+        flex-direction:column;
+      }
+      .loan-actions .add-btn{
+        min-height:44px;
+        width:100%;
+      }
+      .stamp-wrap{
+        margin:22px 0 4px;
+      }
     .stamp{
       width:140px;
       height:140px;
@@ -717,6 +752,22 @@
 
     <hr class="dashed">
 
+    <div class="loan-section">
+      <p class="list-title">السلف</p>
+      <div class="field-row">
+        <input id="loanDesc" placeholder="سبب السلفة؟ (اختياري)" maxlength="40">
+        <input id="loanAmount" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="loan-actions">
+        <button type="button" class="add-btn" id="lendBtn">أنا سلفته</button>
+        <button type="button" class="add-btn borrow" id="borrowBtn">هو سلفني</button>
+      </div>
+      <div id="loanList"></div>
+      <div class="loan-summary" id="loanSummary"></div>
+    </div>
+
+    <hr class="dashed">
+
     <div class="totals" id="totalsBox"></div>
 
     <div class="stamp-wrap">
@@ -753,6 +804,12 @@ const descInput = document.getElementById('desc');
 const amountInput = document.getElementById('amount');
 const addBtn = document.getElementById('addBtn');
 const listEl = document.getElementById('list');
+const loanDescInput = document.getElementById('loanDesc');
+const loanAmountInput = document.getElementById('loanAmount');
+const lendBtn = document.getElementById('lendBtn');
+const borrowBtn = document.getElementById('borrowBtn');
+const loanListEl = document.getElementById('loanList');
+const loanSummaryEl = document.getElementById('loanSummary');
 const totalsBox = document.getElementById('totalsBox');
 const stampEl = document.getElementById('stamp');
 const stampWho = document.getElementById('stampWho');
@@ -786,6 +843,7 @@ let realtimeChannel = null;
 let currentTab = null;
 let names = null;
 let expenses = [];
+let loans = [];
 let myIdentity = null;
 let pendingTs = null;
 let bannerTone = 'info';
@@ -940,6 +998,17 @@ function normalizeExpense(row){
   };
 }
 
+function normalizeLoan(row){
+  return {
+    id: row.id,
+    lender: row.lender,
+    borrower: row.borrower,
+    desc: row.item_desc || '',
+    amount: Number(row.amount),
+    ts: Number(row.ts)
+  };
+}
+
 function normalizeTab(row){
   return {
     id: row.id,
@@ -983,10 +1052,23 @@ async function fetchExpenses(tabId){
   return (data || []).map(normalizeExpense);
 }
 
-function hydrateCurrentTab(tabRow, expenseRows){
+async function fetchLoans(tabId){
+  const client = await ensureSupabase();
+  const { data, error } = await client
+    .from('loans')
+    .select('id, lender, borrower, item_desc, amount, ts')
+    .eq('tab_id', tabId)
+    .is('deleted_at', null)
+    .order('ts', { ascending:false });
+  if(error) throw error;
+  return (data || []).map(normalizeLoan);
+}
+
+function hydrateCurrentTab(tabRow, expenseRows, loanRows){
   currentTab = normalizeTab(tabRow);
   names = { a: currentTab.a, b: currentTab.b };
   expenses = expenseRows || [];
+  loans = loanRows || [];
   myIdentity = localStorage.getItem(getIdentityStorageKey(currentTab.id));
   rememberActiveTab(currentTab);
   updateUrlForTab(currentTab.joinCode);
@@ -999,7 +1081,8 @@ async function refreshCurrentTabData(){
     throw new Error('الجلسة لم تعد موجودة.');
   }
   const expenseRows = await fetchExpenses(currentTab.id);
-  hydrateCurrentTab(tabRow, expenseRows);
+  const loanRows = await fetchLoans(currentTab.id);
+  hydrateCurrentTab(tabRow, expenseRows, loanRows);
   render();
 }
 
@@ -1043,6 +1126,19 @@ async function subscribeToCurrentTab(){
         setBanner(e.message || 'تعذر تحديث المصروفات.', 'error');
       }
     })
+    .on('postgres_changes', {
+      event:'*',
+      schema:'public',
+      table:'loans',
+      filter:`tab_id=eq.${currentTab.id}`
+    }, async ()=>{
+      try{
+        await refreshCurrentTabData();
+        setBanner('تمت مزامنة السلف.', 'success');
+      }catch(e){
+        setBanner(e.message || 'تعذر تحديث السلف.', 'error');
+      }
+    })
     .subscribe((status)=>{
       if(status === 'SUBSCRIBED'){
         setBanner('متصل والجلسة متزامنة بين الأجهزة.', 'success');
@@ -1053,8 +1149,11 @@ async function subscribeToCurrentTab(){
 }
 
 async function openTab(tabRow){
-  const expenseRows = await fetchExpenses(tabRow.id);
-  hydrateCurrentTab(tabRow, expenseRows);
+  const [expenseRows, loanRows] = await Promise.all([
+    fetchExpenses(tabRow.id),
+    fetchLoans(tabRow.id)
+  ]);
+  hydrateCurrentTab(tabRow, expenseRows, loanRows);
   await subscribeToCurrentTab();
   render();
 }
@@ -1233,11 +1332,57 @@ async function clearAllExpenses(){
   setBanner('تم مسح كل الحساب من الجلسة.', 'success');
 }
 
+async function addLoan(iAmLender){
+  const val = parseFloat(loanAmountInput.value);
+  if(!currentTab || !myIdentity || !val || val <= 0) return;
+
+  const other = myIdentity === 'a' ? 'b' : 'a';
+  const lender = iAmLender ? myIdentity : other;
+  const borrower = iAmLender ? other : myIdentity;
+
+  const record = {
+    tab_id: currentTab.id,
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    lender,
+    borrower,
+    item_desc: loanDescInput.value.trim(),
+    amount: val,
+    ts: Date.now()
+  };
+
+  setBanner('جاري حفظ السلفة...', 'info');
+  const client = await ensureSupabase();
+  const { error } = await client.from('loans').insert(record);
+  if(error) throw error;
+
+  loanDescInput.value = '';
+  loanAmountInput.value = '';
+  await refreshCurrentTabData();
+  setStatus('اتحفظت السلفة', 1200);
+  setBanner('متصل والجلسة متزامنة بين الأجهزة.', 'success');
+}
+
+async function deleteLoan(id){
+  if(!currentTab) return;
+  setBanner('جاري حذف السلفة...', 'info');
+  const client = await ensureSupabase();
+  const { error } = await client
+    .from('loans')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('tab_id', currentTab.id)
+    .eq('id', id)
+    .is('deleted_at', null);
+  if(error) throw error;
+  await refreshCurrentTabData();
+  setBanner('تم حذف السلفة والمزامنة بنجاح.', 'success');
+}
+
 async function leaveSession(){
   await stopRealtime();
   currentTab = null;
   names = null;
   expenses = [];
+  loans = [];
   myIdentity = null;
   forgetActiveTab();
   updateUrlForTab(null);
@@ -1325,6 +1470,51 @@ function render(){
     });
   }
 
+  if(loans.length === 0){
+    loanListEl.innerHTML = '<div class="empty">مفيش سلف متسجلة</div>';
+    loanSummaryEl.textContent = '';
+  }else{
+    loanListEl.innerHTML = '';
+    [...loans].sort((x, y)=> y.ts - x.ts).forEach((loan)=>{
+      const row = document.createElement('div');
+      row.className = 'line';
+      const dt = new Date(loan.ts);
+      const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
+      const canDelete = loan.lender === myIdentity || loan.borrower === myIdentity;
+      row.innerHTML = `
+        <div class="line-left">
+          <span class="line-desc">${loan.desc || 'سلفة'}</span>
+          <span class="line-meta">${names[loan.lender]} سلف ${names[loan.borrower]} · ${dateStr}</span>
+        </div>
+        <div class="line-right">
+          <span class="line-amount">${fmt(loan.amount)}</span>
+          ${canDelete ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
+        </div>
+      `;
+      loanListEl.appendChild(row);
+    });
+    loanListEl.querySelectorAll('.line-del').forEach((button)=>{
+      button.onclick = async ()=>{
+        try{
+          await deleteLoan(button.getAttribute('data-id'));
+        }catch(e){
+          setBanner(e.message || 'تعذر حذف السلفة.', 'error');
+        }
+      };
+    });
+
+    const loanAtoB = loans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0);
+    const loanBtoA = loans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0);
+    const loanNet = fmt(loanAtoB - loanBtoA);
+    if(Math.abs(loanNet) < 0.01){
+      loanSummaryEl.innerHTML = 'السلف متعادلة حاليًا';
+    }else if(loanNet > 0){
+      loanSummaryEl.innerHTML = `${names.b} على ${names.a} من السلف: <strong>${fmt(Math.abs(loanNet))}</strong>`;
+    }else{
+      loanSummaryEl.innerHTML = `${names.a} على ${names.b} من السلف: <strong>${fmt(Math.abs(loanNet))}</strong>`;
+    }
+  }
+
   const totalA = expenses.filter((e)=> e.payer === 'a').reduce((sum, item)=> sum + item.amount, 0);
   const totalB = expenses.filter((e)=> e.payer === 'b').reduce((sum, item)=> sum + item.amount, 0);
   const grand = totalA + totalB;
@@ -1332,33 +1522,41 @@ function render(){
   totalsBox.innerHTML = `
     <div style="display:flex;justify-content:space-between;"><span>${names.a} دفع</span><span>${fmt(totalA)}</span></div>
     <div style="display:flex;justify-content:space-between;margin-top:4px;"><span>${names.b} دفع</span><span>${fmt(totalB)}</span></div>
-    <div class="grand"><span>الإجمالي</span><span>${fmt(grand)}</span></div>
+    <div class="grand"><span>إجمالي الأكل</span><span>${fmt(grand)}</span></div>
   `;
 
-  const half = grand / 2;
-  const diff = fmt(totalA - half);
+  const sharedDebt = fmt((totalA - totalB) / 2);
+  const loanDebt = fmt(
+    loans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0) -
+    loans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
+  );
+  const finalDebt = fmt(sharedDebt + loanDebt);
+  const hasAnyActivity = expenses.length > 0 || loans.length > 0;
 
-  if(grand === 0){
+  if(!hasAnyActivity){
     stampEl.classList.remove('settled');
     stampWho.textContent = 'لسه مفيش حساب';
     stampAmt.textContent = '';
     stampTag.textContent = '';
-  }else if(Math.abs(diff) < 0.01){
+  }else if(Math.abs(finalDebt) < 0.01){
     stampEl.classList.add('settled');
     stampWho.textContent = 'الحساب متعادل';
     stampAmt.textContent = '';
     stampTag.textContent = 'مفيش حد عليه حاجة';
   }else{
     stampEl.classList.remove('settled');
-    const owerName = diff > 0 ? names.b : names.a;
-    const owedName = diff > 0 ? names.a : names.b;
+    const owerName = finalDebt > 0 ? names.b : names.a;
+    const owedName = finalDebt > 0 ? names.a : names.b;
     stampWho.textContent = owerName + ' على ' + owedName;
-    stampAmt.textContent = fmt(Math.abs(diff));
+    stampAmt.textContent = fmt(Math.abs(finalDebt));
     stampTag.textContent = 'المطلوب تسديده';
   }
 
   const canAdd = !!currentTab && !!myIdentity && amountInput.value && parseFloat(amountInput.value) > 0;
   addBtn.disabled = !canAdd;
+  const canAddLoan = !!currentTab && !!myIdentity && loanAmountInput.value && parseFloat(loanAmountInput.value) > 0;
+  lendBtn.disabled = !canAddLoan;
+  borrowBtn.disabled = !canAddLoan;
   updateHeaderDetailsVisibility();
 }
 
@@ -1443,6 +1641,25 @@ leaveSessionBtn.onclick = async ()=>{
 };
 
 amountInput.addEventListener('input', render);
+loanAmountInput.addEventListener('input', render);
+
+lendBtn.onclick = async ()=>{
+  try{
+    await addLoan(true);
+    render();
+  }catch(e){
+    setBanner(e.message || 'تعذر حفظ السلفة.', 'error');
+  }
+};
+
+borrowBtn.onclick = async ()=>{
+  try{
+    await addLoan(false);
+    render();
+  }catch(e){
+    setBanner(e.message || 'تعذر حفظ السلفة.', 'error');
+  }
+};
 
 pasteToggle.onclick = ()=>{
   pasteBox.classList.toggle('hidden');
