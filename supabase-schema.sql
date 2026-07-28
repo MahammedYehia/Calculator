@@ -15,7 +15,7 @@ create table if not exists public.expenses (
   id text primary key,
   tab_id uuid not null references public.shared_tabs(id) on delete cascade,
   payer text not null,
-  desc text not null default '',
+  item_desc text not null default '',
   amount numeric(12,2) not null,
   ts bigint not null,
   created_at timestamptz not null default now(),

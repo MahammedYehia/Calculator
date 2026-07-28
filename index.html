@@ -793,7 +793,7 @@ function normalizeExpense(row){
   return {
     id: row.id,
     payer: row.payer,
-    desc: row.desc || '',
+    desc: row.item_desc || '',
     amount: Number(row.amount),
     ts: Number(row.ts)
   };
@@ -834,7 +834,7 @@ async function fetchExpenses(tabId){
   const client = await ensureSupabase();
   const { data, error } = await client
     .from('expenses')
-    .select('id, payer, desc, amount, ts')
+    .select('id, payer, item_desc, amount, ts')
     .eq('tab_id', tabId)
     .order('ts', { ascending:false });
   if(error) throw error;
@@ -1013,7 +1013,7 @@ async function createSession(options){
       tab_id: tabRow.id,
       id: item.id,
       payer: item.payer,
-      desc: item.desc,
+      item_desc: item.desc,
       amount: item.amount,
       ts: item.ts
     }));
@@ -1039,7 +1039,7 @@ async function addExpense(){
     tab_id: currentTab.id,
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     payer: myIdentity,
-    desc: descInput.value.trim(),
+    item_desc: descInput.value.trim(),
     amount: val,
     ts: pendingTs || Date.now()
   };
