@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حساب الأكل</title>
+
+<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogItit2LPYp9ioINin2YTYo9mD2YQiLAogICJzaG9ydF9uYW1lIjogItit2LPYp9ioINin2YTYo9mD2YQiLAogICJkZXNjcmlwdGlvbiI6ICLYr9mB2KrYsSDZhdi02KrYsdmDINmE2KrZgtiz2YrZhSDZhdi12KfYsdmK2YEg2KfZhNij2YPZhCIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjRENENkM2IiwKICAidGhlbWVfY29sb3IiOiAiIzIxMUYxOSIsCiAgIm9yaWVudGF0aW9uIjogInBvcnRyYWl0IiwKICAiZGlyIjogInJ0bCIsCiAgImxhbmciOiAiYXIiLAogICJpY29ucyI6IFsKICAgIHsgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0OGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFd01DSWdabWxzYkQwaUl6SXhNVVl4T1NJdlBqeGphWEpqYkdVZ1kzZzlJakkxTmlJZ1kzazlJakkxTmlJZ2NqMGlNVGsySWlCbWFXeHNQU0p1YjI1bElpQnpkSEp2YTJVOUlpTkdOMFkwUlVJaUlITjBjbTlyWlMxM2FXUjBhRDBpTVRBaUx6NDhkR1Y0ZENCNFBTSXlOVFlpSUhrOUlqTXlNQ0lnWm05dWRDMW1ZVzFwYkhrOUlrRnlhV0ZzTENCellXNXpMWE5sY21sbUlpQm1iMjUwTFhOcGVtVTlJakl5TUNJZ1ptOXVkQzEzWldsbmFIUTlJamN3TUNJZ1ptbHNiRDBpSTBZM1JqUkZRaUlnZEdWNGRDMWhibU5vYjNJOUltMXBaR1JzWlNJKzJLM1pnRHd2ZEdWNGRENDhMM04yWno0SyIsICJzaXplcyI6ICIxOTJ4MTkyIiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsICJwdXJwb3NlIjogImFueSIgfSwKICAgIHsgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBMU1USWdOVEV5SWo0OGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbmc5SWpFd01DSWdabWxzYkQwaUl6SXhNVVl4T1NJdlBqeGphWEpqYkdVZ1kzZzlJakkxTmlJZ1kzazlJakkxTmlJZ2NqMGlNVGsySWlCbWFXeHNQU0p1YjI1bElpQnpkSEp2YTJVOUlpTkdOMFkwUlVJaUlITjBjbTlyWlMxM2FXUjBhRDBpTVRBaUx6NDhkR1Y0ZENCNFBTSXlOVFlpSUhrOUlqTXlNQ0lnWm05dWRDMW1ZVzFwYkhrOUlrRnlhV0ZzTENCellXNXpMWE5sY21sbUlpQm1iMjUwTFhOcGVtVTlJakl5TUNJZ1ptOXVkQzEzWldsbmFIUTlJamN3TUNJZ1ptbHNiRDBpSTBZM1JqUkZRaUlnZEdWNGRDMWhibU5vYjNJOUltMXBaR1JzWlNJKzJLM1pnRHd2ZEdWNGRENDhMM04yWno0SyIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsICJwdXJwb3NlIjogImFueSIgfQogIF0KfQo=">
+
+<meta name="theme-color" content="#211F19">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="حساب الأكل">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzIxMUYxOSIvPjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTk2IiBmaWxsPSJub25lIiBzdHJva2U9IiNGN0Y0RUIiIHN0cm9rZS13aWR0aD0iMTAiLz48dGV4dCB4PSIyNTYiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyMCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI0Y3RjRFQiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+2K3ZgDwvdGV4dD48L3N2Zz4K">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzIxMUYxOSIvPjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTk2IiBmaWxsPSJub25lIiBzdHJva2U9IiNGN0Y0RUIiIHN0cm9rZS13aWR0aD0iMTAiLz48dGV4dCB4PSIyNTYiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIyMCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI0Y3RjRFQiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+2K3ZgDwvdGV4dD48L3N2Zz4K">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;… rel="stylesheet">
+<style>
+ :root{
+ --paper:#F7F4EB;
+ --paper-alt:#EFEADA;
+ --ink:#211F19;
+ --ink-soft:#71695A;
+ --line:#D8D0BC;
+ --stamp-red:#AE3A2C;
+ --stamp-red-soft:#F4E1DC;
+ --stamp-green:#3E6B4A;
+ --stamp-green-soft:#DFEBE1;
+ }
+ *{box-sizing:border-box;}
+ body{
+ margin:0;
+ background:#DCD6C6;
+ font-family:'Cairo', sans-serif;
+ color:var(--ink);
+ display:flex;
+ justify-content:center;
+ padding:32px 14px 60px;
+ min-height:100vh;
+ }
+.receipt{
+ width:100%;
+ max-width:420px;
+ background:var(--paper);
+ position:relative;
+ padding:34px 26px 30px;
+ box-shadow:0 18px 40px -18px rgba(0,0,0,0.35);
+ }
+.receipt::before, .receipt::after{
+ content:"";
+ position:absolute;
+ right:0; left:0; height:12px;
+ background:
+ radial-gradient(circle at 10px 6px, transparent 6px, var(--paper) 6.5px) repeat-x;
+ background-size:20px 12px;
+ }
+.receipt::before{ top:-6px; }
+.receipt::after{ bottom:-6px; transform:scaleY(-1); }
+
+.brand{
+ text-align:center;
+ margin-bottom:4px;
+ }
+.brand.mark{
+ display:inline-flex;
+ width:40px; height:40px;
+ border:1.5px solid var(--ink);
+ border-radius:50%;
+ align-items:center;
+ justify-content:center;
+ font-family:'JetBrains Mono', monospace;
+ font-weight:700;
+ font-size:15px;
+ margin-bottom:10px;
+ }
+.brand h1{
+ font-size:20px;
+ font-weight:800;
+ margin:0 0 4px;
+ letter-spacing:0.5px;
+ }
+.brand p{
+ margin:0;
+ font-size:12px;
+ color:var(--ink-soft);
+ font-family:'JetBrains Mono', monospace;
+ }
+
+.dashed{
+ border:none;
+ border-top:1.5px dashed var(--line);
+ margin:20px 0;
+ }
+
+/* setup screen */
+.setup label{
+ display:block;
+ font-size:13px;
+ color:var(--ink-soft);
+ margin:14px 0 6px;
+ }
+.setup input{
+ width:100%;
+ padding:10px 12px;
+ border:1.5px solid var(--ink);
+ background:var(--paper-alt);
+ border-radius:2px;
+ font-family:'Cairo', sans-serif;
+ font-size:15px;
+ color:var(--ink);
+ }
+.setup input:focus{ outline:2px solid var(--stamp-green); outline-offset:1px; }
+
+ button{
+ font-family:'Cairo', sans-serif;
+ cursor:pointer;
+ }
+.btn-main{
+ width:100%;
+ margin-top:22px;
+ padding:12px;
+ background:var(--ink);
+ color:var(--paper);
+ border:none;
+ border-radius:2px;
+ font-size:15px;
+ font-weight:700;
+ letter-spacing:0.5px;
+ }
+.btn-main:active{ transform:translateY(1px); }
+
+/* add form */
+.payer-row{
+ display:flex;
+ gap:8px;
+ margin-top:10px;
+ }
+.payer-btn{
+ flex:1;
+ padding:10px 6px;
+ background:var(--paper-alt);
+ border:1.5px solid var(--line);
+ border-radius:2px;
+ font-size:13px;
+ font-weight:600;
+ color:var(--ink-soft);
+ text-align:center;
+ }
+.payer-btn.active{
+ border-color:var(--stamp-green);
+ background:var(--stamp-green-soft);
+ color:var(--stamp-green);
+ }
+.me-row{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ background:var(--stamp-green-soft);
+ border:1.5px solid var(--stamp-green);
+ border-radius:2px;
+ padding:9px 12px;
+ font-size:13px;
+ color:var(--stamp-green);
+ font-weight:600;
+ }
+.me-row button{
+ background:none;
+ border:none;
+ color:var(--ink-soft);
+ font-size:11px;
+ text-decoration:underline;
+ font-weight:400;
+ }
+.me-row button:hover{ color:var(--stamp-red); }
+.field-row{
+ display:flex;
+ gap:8px;
+ margin-top:10px;
+ }
+.field-row input{
+ padding:9px 10px;
+ border:1.5px solid var(--line);
+ background:var(--paper-alt);
+ border-radius:2px;
+ font-family:'Cairo', sans-serif;
+ font-size:14px;
+ color:var(--ink);
+ }
+.field-row input#desc{ flex:1.4; }
+.field-row input#amount{ flex:1; font-family:'JetBrains Mono', monospace; text-align:left; direction:ltr; }
+.field-row input:focus{ outline:none; border-color:var(--ink); }
+
+.add-btn{
+ width:100%;
+ margin-top:10px;
+ padding:10px;
+ background:var(--stamp-green);
+ color:var(--paper);
+ border:none;
+ border-radius:2px;
+ font-size:14px;
+ font-weight:700;
+ }
+.add-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+
+.paste-toggle{
+ width:100%;
+ margin-top:14px;
+ padding:8px;
+ background:none;
+ border:1px dashed var(--line);
+ border-radius:2px;
+ font-size:12px;
+ color:var(--ink-soft);
+ }
+.paste-toggle:hover{ border-color:var(--ink-soft); color:var(--ink); }
+.paste-box{
+ margin-top:10px;
+ background:var(--paper-alt);
+ border:1.5px solid var(--line);
+ border-radius:2px;
+ padding:10px;
+ }
+.paste-box textarea{
+ width:100%;
+ min-height:76px;
+ padding:8px 10px;
+ border:1.5px solid var(--line);
+ background:var(--paper);
+ border-radius:2px;
+ font-family:'JetBrains Mono', monospace;
+ font-size:12px;
+ color:var(--ink);
+ resize:vertical;
+ direction:ltr;
+ text-align:left;
+ }
+.paste-hint{
+ font-size:11px;
+ color:var(--ink-soft);
+ margin:8px 2px 0;
+ }
+.paste-hint.ok{ color:var(--stamp-green); }
+.paste-hint.bad{ color:var(--stamp-red); }
+
+/* list */
+.list-title{
+ font-size:11px;
+ color:var(--ink-soft);
+ letter-spacing:1px;
+ margin:0 0 10px;
+ font-family:'JetBrains Mono', monospace;
+ }
+.line{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:8px 0;
+ border-bottom:1px dotted var(--line);
+ font-size:13.5px;
+ }
+.line-left{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.line-desc{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:170px; }
+.line-meta{ font-size:11px; color:var(--ink-soft); }
+.line-right{ display:flex; align-items:center; gap:10px; }
+.line-amount{
+ font-family:'JetBrains Mono', monospace;
+ font-weight:700;
+ direction:ltr;
+ }
+.line-del{
+ background:none;
+ border:none;
+ color:var(--ink-soft);
+ font-size:15px;
+ line-height:1;
+ padding:2px 4px;
+ }
+.line-del:hover{ color:var(--stamp-red); }
+.empty{
+ text-align:center;
+ color:var(--ink-soft);
+ font-size:13px;
+ padding:18px 0;
+ }
+
+/* summary */
+.totals{
+ display:flex;
+ justify-content:space-between;
+ font-size:13px;
+ margin-bottom:6px;
+ color:var(--ink-soft);
+ }
+.totals span:last-child{
+ font-family:'JetBrains Mono', monospace;
+ color:var(--ink);
+ font-weight:600;
+ direction:ltr;
+ }
+.grand{
+ display:flex;
+ justify-content:space-between;
+ font-size:14px;
+ font-weight:700;
+ margin-top:8px;
+ padding-top:8px;
+ border-top:1.5px solid var(--ink);
+ }
+.grand span:last-child{
+ font-family:'JetBrains Mono', monospace;
+ direction:ltr;
+ }
+
+.stamp-wrap{
+ display:flex;
+ justify-content:center;
+ margin:26px 0 6px;
+ }
+.stamp{
+ border:2.5px double var(--stamp-red);
+ color:var(--stamp-red);
+ border-radius:50%;
+ width:168px; height:168px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ transform:rotate(-7deg);
+ padding:10px;
+ }
+.stamp.settled{
+ border-color:var(--stamp-green);
+ color:var(--stamp-green);
+ }
+.stamp.who{
+ font-size:14px;
+ font-weight:700;
+ line-height:1.4;
+ }
+.stamp.amt{
+ font-family:'JetBrains Mono', monospace;
+ font-size:22px;
+ font-weight:700;
+ margin-top:4px;
+ }
+.stamp.tag{
+ font-size:10px;
+ letter-spacing:2px;
+ margin-top:4px;
+ font-family:'JetBrains Mono', monospace;
+ }
+
+.footer-row{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-top:18px;
+ }
+.reset-link{
+ background:none;
+ border:none;
+ color:var(--ink-soft);
+ font-size:11px;
+ text-decoration:underline;
+ padding:4px;
+ }
+.reset-link:hover{ color:var(--stamp-red); }
+.status{
+ font-size:11px;
+ color:var(--ink-soft);
+ font-family:'JetBrains Mono', monospace;
+ }
+
+.hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="receipt">
+ <div class="brand">
+ <div class="mark">حـ</div>
+ <h1>حساب الأكل</h1>
+ <p id="subline">دفتر مشترك للمصاريف</p>
+ </div>
+
+ <hr class="dashed">
+
+<!-- SETUP -->
+ <div id="setup" class="setup hidden">
+ <label>اسمك إيه؟</label>
+ <input id="nameA" placeholder="مثلاً: أحمد" maxlength="20">
+ <label>واسم صاحبك؟</label>
+ <input id="nameB" placeholder="مثلاً: محمد" maxlength="20">
+ <button class="btn-main" id="startBtn">ابدأ الحساب</button>
+ </div>
+
+<!-- WHOAMI -->
+ <div id="whoami" class="setup hidden">
+ <label>إنت مين فيكوا؟</label>
+ <div class="payer-row" id="whoamiRow"></div>
+ </div>
+
+<!-- APP -->
+ <div id="app" class="hidden">
+
+ <div class="me-row" id="meRow"></div>
+
+ <button type="button" class="paste-toggle" id="pasteToggle">الصق رسالة الدفع بدل ما تكتب يدوي</button>
+ <div id="pasteBox" class="paste-box hidden">
+ <textarea id="pasteArea" placeholder="الصق هنا رسالة الدفع اللي جاتلك على الموبايل"></textarea>
+ <button type="button" class="add-btn" id="parseBtn" style="background:var(--ink);">استخرج البيانات</button>
+ <p class="paste-hint" id="parseHint">&nbsp;</p>
+ </div>
+
+ <div class="field-row">
+ <input id="desc" placeholder="اشتريت إيه؟ (اختياري)" maxlength="40">
+ <input id="amount" placeholder="0" inputmode="decimal">
+ </div>
+ <button class="add-btn" id="addBtn">سجل الحساب</button>
+
+ <hr class="dashed">
+
+ <p class="list-title">القائمة</p>
+ <div id="list"></div>
+
+ <hr class="dashed">
+
+ <div class="totals" id="totalsBox"></div>
+
+ <div class="stamp-wrap">
+ <div class="stamp" id="stamp">
+ <div class="who" id="stampWho">لسه مفيش حساب</div>
+ <div class="amt" id="stampAmt"></div>
+ <div class="tag" id="stampTag"></div>
+ </div>
+ </div>
+
+ <div class="footer-row">
+ <span class="status" id="statusMsg">&nbsp;</span>
+ <button class="reset-link" id="resetBtn">امسح كل الحساب</button>
+ </div>
+ </div>
+</div>
+
+<script>
+const setupEl = document.getElementById('setup');
+const whoamiEl = document.getElementById('whoami');
+const whoamiRow = document.getElementById('whoamiRow');
+const appEl = document.getElementById('app');
+const nameAInput = document.getElementById('nameA');
+const nameBInput = document.getElementById('nameB');
+const startBtn = document.getElementById('startBtn');
+const meRow = document.getElementById('meRow');
+const pasteToggle = document.getElementById('pasteToggle');
+const pasteBox = document.getElementById('pasteBox');
+const pasteArea = document.getElementById('pasteArea');
+const parseBtn = document.getElementById('parseBtn');
+const parseHint = document.getElementById('parseHint');
+const descInput = document.getElementById('desc');
+const amountInput = document.getElementById('amount');
+const addBtn = document.getElementById('addBtn');
+const listEl = document.getElementById('list');
+const totalsBox = document.getElementById('totalsBox');
+const stampEl = document.getElementById('stamp');
+const stampWho = document.getElementById('stampWho');
+const stampAmt = document.getElementById('stampAmt');
+const stampTag = document.getElementById('stampTag');
+const resetBtn = document.getElementById('resetBtn');
+const statusMsg = document.getElementById('statusMsg');
+const subline = document.getElementById('subline');
+
+let names = null;
+let expenses = [];
+let myIdentity = null;
+let pendingTs = null;
+
+function fmt(n){
+ return Math.round(n * 100) / 100;
+}
+
+async function loadAll(){
+ try{
+ const n = await window.storage.get('tab_names', true);
+ names = n ? JSON.parse(n.value) : null;
+ }catch(e){ names = null; }
+
+ try{
+ const e = await window.storage.get('tab_expenses', true);
+ expenses = e ? JSON.parse(e.value) : [];
+ }catch(e){ expenses = []; }
+
+ try{
+ const id = await window.storage.get('my_identity', false);
+ myIdentity = id ? id.value : null;
+ }catch(e){ myIdentity = null; }
+
+ render();
+}
+
+async function saveNames(){
+ try{
+ await window.storage.set('tab_names', JSON.stringify(names), true);
+ }catch(e){ statusMsg.textContent = 'حصل خطأ في الحفظ'; }
+}
+
+async function saveIdentity(key){
+ myIdentity = key;
+ try{
+ await window.storage.set('my_identity', key, false);
+ }catch(e){ statusMsg.textContent = 'حصل خطأ في الحفظ'; }
+ render();
+}
+
+async function clearIdentity(){
+ myIdentity = null;
+ try{
+ await window.storage.delete('my_identity', false);
+ }catch(e){}
+ render();
+}
+
+async function saveExpenses(){
+ try{
+ await window.storage.set('tab_expenses', JSON.stringify(expenses), true);
+ statusMsg.textContent = 'اتحفظ';
+ setTimeout(()=>{ statusMsg.textContent = '\u00a0'; }, 1200);
+ }catch(e){ statusMsg.textContent = 'حصل خطأ في الحفظ'; }
+}
+
+function render(){
+ if(!names){
+ setupEl.classList.remove('hidden');
+ whoamiEl.classList.add('hidden');
+ appEl.classList.add('hidden');
+ return;
+ }
+ setupEl.classList.add('hidden');
+
+ if(!myIdentity){
+ whoamiEl.classList.remove('hidden');
+ appEl.classList.add('hidden');
+ whoamiRow.innerHTML = '';
+ ['a','b'].forEach(key=>{
+ const btn = document.createElement('button');
+ btn.type = 'button';
+ btn.className = 'payer-btn';
+ btn.textContent = names[key];
+ btn.onclick = ()=> saveIdentity(key);
+ whoamiRow.appendChild(btn);
+ });
+ return;
+ }
+
+ whoamiEl.classList.add('hidden');
+ appEl.classList.remove('hidden');
+ subline.textContent = names.a + ' × ' + names.b;
+
+ meRow.innerHTML = `<span>بتسجل باسم ${names[myIdentity]}</span><button id="notMeBtn">مش أنا</button>`;
+ document.getElementById('notMeBtn').onclick = clearIdentity;
+
+ if(expenses.length === 0){
+ listEl.innerHTML = '<div class="empty">لسه مفيش حاجة متسجلة</div>';
+ }else{
+ listEl.innerHTML = '';
+ [...expenses].sort((x,y)=> y.ts - x.ts).forEach(exp=>{
+ const row = document.createElement('div');
+ row.className = 'line';
+ const dt = new Date(exp.ts);
+ const dateStr = dt.toLocaleDateString('ar-EG', {day:'numeric', month:'short'});
+ row.innerHTML = `
+ <div class="line-left">
+ <span class="line-desc">${exp.desc || 'بدون وصف'}</span>
+ <span class="line-meta">${names[exp.payer]} · ${dateStr}</span>
+ </div>
+ <div class="line-right">
+ <span class="line-amount">${fmt(exp.amount)}</span>
+ ${exp.payer === myIdentity ? `<button class="line-del" data-id="${exp.id}" aria-label="حذف">×</button>` : ''}
+ </div>
+ `;
+ listEl.appendChild(row);
+ });
+ listEl.querySelectorAll('.line-del').forEach(b=>{
+b.onclick = ()=> deleteExpense(b.getAttribute('data-id'));
+ });
+ }
+
+ const totalA = expenses.filter(e=>e.payer==='a').reduce((s,e)=>s+e.amount,0);
+ const totalB = expenses.filter(e=>e.payer==='b').reduce((s,e)=>s+e.amount,0);
+ const grand = totalA + totalB;
+
+ totalsBox.innerHTML = `
+ <div style="display:flex;justify-content:space-between;"><span>${names.a} دفع</span><span>${fmt(totalA)}</span></div>
+ <div style="display:flex;justify-content:space-between;margin-top:4px;"><span>${names.b} دفع</span><span>${fmt(totalB)}</span></div>
+ <div class="grand"><span>الإجمالي</span><span>${fmt(grand)}</span></div>
+ `;
+
+ const half = grand / 2;
+ const diff = fmt(totalA - half);
+
+ if(grand === 0){
+ stampEl.classList.remove('settled');
+ stampWho.textContent = 'لسه مفيش حساب';
+ stampAmt.textContent = '';
+ stampTag.textContent = '';
+ }else if(Math.abs(diff) < 0.01){
+ stampEl.classList.add('settled');
+ stampWho.textContent = 'الحساب متعادل';
+ stampAmt.textContent = '';
+ stampTag.textContent = 'مفيش حد عليه حاجة';
+ }else{
+ stampEl.classList.remove('settled');
+ const owerName = diff > 0 ? names.b : names.a;
+ const owedName = diff > 0 ? names.a : names.b;
+ stampWho.textContent = owerName + ' على ' + owedName;
+ stampAmt.textContent = fmt(Math.abs(diff));
+ stampTag.textContent = 'المطلوب تسديده';
+ }
+
+ const canAdd = amountInput.value && parseFloat(amountInput.value) > 0;
+ addBtn.disabled = !canAdd;
+}
+
+startBtn.onclick = async ()=>{
+ const a = nameAInput.value.trim();
+ const b = nameBInput.value.trim();
+ if(!a || !b){
+ statusMsg.textContent = 'اكتب الاسمين الأول';
+ return;
+ }
+ names = {a, b};
+ await saveNames();
+ render();
+};
+
+amountInput.addEventListener('input', render);
+
+pasteToggle.onclick = ()=>{
+ pasteBox.classList.toggle('hidden');
+};
+
+function parsePaymentMessage(text){
+ const result = { amount:null, merchant:null, ts:null };
+
+ const amountMatch = text.match(/(?:SAR|ريال|ر\.س|SR)\s*[:\s]*([\d]+(?:[.,]\d+)?)/i)
+ || text.match(/([\d]+(?:[.,]\d+)?)\s*(?:SAR|ريال|ر\.س|SR)/i);
+ if(amountMatch){
+ result.amount = parseFloat(amountMatch[1].replace(',', '.'));
+ }
+
+ const merchantMatch = text.match(/ل[ـ]+\s*([^\n\r]+)/) || text.match(/(?:^|\n)\s*ل\s+([^\n\r]+)/);
+ if(merchantMatch){
+ result.merchant = merchantMatch[1].trim();
+ }
+
+ const dateMatch = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
+ if(dateMatch){
+ let [, d, mo, y, h, mi] = dateMatch;
+ d = parseInt(d); mo = parseInt(mo); y = parseInt(y);
+ if(y < 100) y += 2000;
+ h = h ? parseInt(h) : 12;
+ mi = mi ? parseInt(mi) : 0;
+ const dt = new Date(y, mo - 1, d, h, mi);
+ if(!isNaN(dt.getTime())) result.ts = dt.getTime();
+ }
+
+ return result;
+}
+
+parseBtn.onclick = ()=>{
+ const text = pasteArea.value.trim();
+ if(!text){
+ parseHint.textContent = 'الصق الرسالة الأول';
+ parseHint.className = 'paste-hint bad';
+ return;
+ }
+ const parsed = parsePaymentMessage(text);
+ const found = [];
+ if(parsed.amount){
+ amountInput.value = parsed.amount;
+ found.push('المبلغ');
+ }
+ if(parsed.merchant){
+ descInput.value = parsed.merchant;
+ found.push('المكان');
+ }
+ if(parsed.ts){
+ pendingTs = parsed.ts;
+ found.push('التاريخ');
+ }
+ if(found.length){
+ parseHint.textContent = 'لقيت: ' + found.join('، ') + ' — راجعها وسجلها';
+ parseHint.className = 'paste-hint ok';
+ }else{
+ parseHint.textContent = 'معرفتش أطلع بيانات من الرسالة دي، اكتب يدوي';
+ parseHint.className = 'paste-hint bad';
+ }
+ render();
+};
+
+addBtn.onclick = async ()=>{
+ const val = parseFloat(amountInput.value);
+ if(!val || val <= 0) return;
+ expenses.push({
+ id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+ payer: myIdentity,
+ desc: descInput.value.trim(),
+ amount: val,
+ ts: pendingTs || Date.now()
+ });
+ descInput.value = '';
+ amountInput.value = '';
+ pasteArea.value = '';
+ pendingTs = null;
+ parseHint.textContent = '\u00a0';
+ parseHint.className = 'paste-hint';
+ pasteBox.classList.add('hidden');
+ await saveExpenses();
+ render();
+};
+
+async function deleteExpense(id){
+ expenses = expenses.filter(e=>e.id !== id);
+ await saveExpenses();
+ render();
+}
+
+resetBtn.onclick = async ()=>{
+ if(!confirm('متأكد إنك عايز تمسح كل الحساب؟ الخطوة دي مش هترجع')) return;
+ expenses = [];
+ await saveExpenses();
+ render();
+};
+
+loadAll();
+</script>
+
+</body>
+</html>
