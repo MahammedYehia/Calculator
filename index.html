@@ -427,6 +427,37 @@
   .loan-section{
     margin-top:4px;
   }
+  .loan-toggle{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    background:var(--paper-alt);
+    border:1.5px solid var(--line);
+    border-radius:2px;
+    color:var(--ink);
+    font-size:13px;
+    font-weight:700;
+  }
+  .loan-toggle .chevron{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    transition:transform 0.15s ease;
+  }
+  .loan-toggle[aria-expanded="true"] .chevron{
+    transform:rotate(180deg);
+  }
+  .loan-toggle-meta{
+    font-size:11px;
+    color:var(--ink-soft);
+    font-weight:400;
+  }
+  .loan-body{
+    margin-top:12px;
+  }
   .loan-summary{
     margin-top:10px;
     font-size:12px;
@@ -451,6 +482,52 @@
   }
   .loan-actions .add-btn.borrow{
     background:var(--ink);
+  }
+  .settle-box{
+    margin-top:8px;
+  }
+  .settle-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    padding:10px 0;
+    border-bottom:1px dotted var(--line);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .settle-row .settle-label{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .settle-row .settle-title{
+    color:var(--ink);
+    font-weight:700;
+  }
+  .settle-row .settle-who{
+    font-size:11px;
+  }
+  .settle-row .settle-amt{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    color:var(--ink);
+    direction:ltr;
+    white-space:nowrap;
+  }
+  .settle-row.total{
+    border-bottom:none;
+    border-top:1.5px solid var(--ink);
+    margin-top:4px;
+    padding-top:12px;
+    font-size:14px;
+  }
+  .settle-row.settled .settle-amt,
+  .settle-row.settled .settle-who{
+    color:var(--stamp-green);
+  }
+  .settle-row.owed .settle-amt{
+    color:var(--stamp-red);
   }
 
   /* summary */
@@ -753,30 +830,29 @@
     <hr class="dashed">
 
     <div class="loan-section">
-      <p class="list-title">السلف</p>
-      <div class="field-row">
-        <input id="loanDesc" placeholder="سبب السلفة؟ (اختياري)" maxlength="40">
-        <input id="loanAmount" placeholder="0" inputmode="decimal">
+      <button type="button" class="loan-toggle" id="loanToggle" aria-expanded="false">
+        <span>السلف <span class="loan-toggle-meta" id="loanToggleMeta"></span></span>
+        <span class="chevron">▼</span>
+      </button>
+      <div id="loanBody" class="loan-body hidden">
+        <div class="field-row">
+          <input id="loanDesc" placeholder="سبب السلفة؟ (اختياري)" maxlength="40">
+          <input id="loanAmount" placeholder="0" inputmode="decimal">
+        </div>
+        <div class="loan-actions">
+          <button type="button" class="add-btn" id="lendBtn">أنا سلفته</button>
+          <button type="button" class="add-btn borrow" id="borrowBtn">هو سلفني</button>
+        </div>
+        <div id="loanList"></div>
+        <div class="loan-summary" id="loanSummary"></div>
       </div>
-      <div class="loan-actions">
-        <button type="button" class="add-btn" id="lendBtn">أنا سلفته</button>
-        <button type="button" class="add-btn borrow" id="borrowBtn">هو سلفني</button>
-      </div>
-      <div id="loanList"></div>
-      <div class="loan-summary" id="loanSummary"></div>
     </div>
 
     <hr class="dashed">
 
     <div class="totals" id="totalsBox"></div>
 
-    <div class="stamp-wrap">
-      <div class="stamp" id="stamp">
-        <div class="who" id="stampWho">لسه مفيش حساب</div>
-        <div class="amt" id="stampAmt"></div>
-        <div class="tag" id="stampTag"></div>
-      </div>
-    </div>
+    <div class="settle-box" id="settleBox"></div>
 
     <div class="footer-row">
       <span class="status" id="statusMsg">&nbsp;</span>
@@ -810,11 +886,11 @@ const lendBtn = document.getElementById('lendBtn');
 const borrowBtn = document.getElementById('borrowBtn');
 const loanListEl = document.getElementById('loanList');
 const loanSummaryEl = document.getElementById('loanSummary');
+const loanToggle = document.getElementById('loanToggle');
+const loanBody = document.getElementById('loanBody');
+const loanToggleMeta = document.getElementById('loanToggleMeta');
 const totalsBox = document.getElementById('totalsBox');
-const stampEl = document.getElementById('stamp');
-const stampWho = document.getElementById('stampWho');
-const stampAmt = document.getElementById('stampAmt');
-const stampTag = document.getElementById('stampTag');
+const settleBox = document.getElementById('settleBox');
 const resetBtn = document.getElementById('resetBtn');
 const statusMsg = document.getElementById('statusMsg');
 const subline = document.getElementById('subline');
@@ -849,6 +925,7 @@ let pendingTs = null;
 let bannerTone = 'info';
 let bannerMessage = '';
 let brandPanelExpanded = false;
+let loansExpanded = false;
 let legacySnapshot = { names:null, expenses:[], identity:null };
 
 function hasSupabaseConfig(){
@@ -1473,6 +1550,7 @@ function render(){
   if(loans.length === 0){
     loanListEl.innerHTML = '<div class="empty">مفيش سلف متسجلة</div>';
     loanSummaryEl.textContent = '';
+    loanToggleMeta.textContent = '';
   }else{
     loanListEl.innerHTML = '';
     [...loans].sort((x, y)=> y.ts - x.ts).forEach((loan)=>{
@@ -1508,12 +1586,18 @@ function render(){
     const loanNet = fmt(loanAtoB - loanBtoA);
     if(Math.abs(loanNet) < 0.01){
       loanSummaryEl.innerHTML = 'السلف متعادلة حاليًا';
+      loanToggleMeta.textContent = `(${loans.length})`;
     }else if(loanNet > 0){
       loanSummaryEl.innerHTML = `${names.b} على ${names.a} من السلف: <strong>${fmt(Math.abs(loanNet))}</strong>`;
+      loanToggleMeta.textContent = `(${loans.length} · ${fmt(Math.abs(loanNet))})`;
     }else{
       loanSummaryEl.innerHTML = `${names.a} على ${names.b} من السلف: <strong>${fmt(Math.abs(loanNet))}</strong>`;
+      loanToggleMeta.textContent = `(${loans.length} · ${fmt(Math.abs(loanNet))})`;
     }
   }
+
+  loanToggle.setAttribute('aria-expanded', loansExpanded ? 'true' : 'false');
+  loanBody.classList.toggle('hidden', !loansExpanded);
 
   const totalA = expenses.filter((e)=> e.payer === 'a').reduce((sum, item)=> sum + item.amount, 0);
   const totalB = expenses.filter((e)=> e.payer === 'b').reduce((sum, item)=> sum + item.amount, 0);
@@ -1525,31 +1609,53 @@ function render(){
     <div class="grand"><span>إجمالي الأكل</span><span>${fmt(grand)}</span></div>
   `;
 
-  const sharedDebt = fmt((totalA - totalB) / 2);
+  const foodDebt = fmt((totalA - totalB) / 2);
   const loanDebt = fmt(
     loans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0) -
     loans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
   );
-  const finalDebt = fmt(sharedDebt + loanDebt);
-  const hasAnyActivity = expenses.length > 0 || loans.length > 0;
+  const finalDebt = fmt(foodDebt + loanDebt);
 
-  if(!hasAnyActivity){
-    stampEl.classList.remove('settled');
-    stampWho.textContent = 'لسه مفيش حساب';
-    stampAmt.textContent = '';
-    stampTag.textContent = '';
-  }else if(Math.abs(finalDebt) < 0.01){
-    stampEl.classList.add('settled');
-    stampWho.textContent = 'الحساب متعادل';
-    stampAmt.textContent = '';
-    stampTag.textContent = 'مفيش حد عليه حاجة';
+  function settleLine(title, debt){
+    if(Math.abs(debt) < 0.01){
+      return `
+        <div class="settle-row settled">
+          <div class="settle-label">
+            <span class="settle-title">${title}</span>
+            <span class="settle-who">متعادل</span>
+          </div>
+          <span class="settle-amt">0</span>
+        </div>
+      `;
+    }
+    const owerName = debt > 0 ? names.b : names.a;
+    const owedName = debt > 0 ? names.a : names.b;
+    return `
+      <div class="settle-row owed">
+        <div class="settle-label">
+          <span class="settle-title">${title}</span>
+          <span class="settle-who">${owerName} على ${owedName}</span>
+        </div>
+        <span class="settle-amt">${fmt(Math.abs(debt))}</span>
+      </div>
+    `;
+  }
+
+  if(expenses.length === 0 && loans.length === 0){
+    settleBox.innerHTML = `
+      <div class="settle-row settled">
+        <div class="settle-label">
+          <span class="settle-title">لسه مفيش حساب</span>
+          <span class="settle-who">سجّل مصروف أو سلفة أول</span>
+        </div>
+        <span class="settle-amt">0</span>
+      </div>
+    `;
   }else{
-    stampEl.classList.remove('settled');
-    const owerName = finalDebt > 0 ? names.b : names.a;
-    const owedName = finalDebt > 0 ? names.a : names.b;
-    stampWho.textContent = owerName + ' على ' + owedName;
-    stampAmt.textContent = fmt(Math.abs(finalDebt));
-    stampTag.textContent = 'المطلوب تسديده';
+    settleBox.innerHTML =
+      settleLine('المطلوب تسديده للأكل', foodDebt) +
+      settleLine('المطلوب تسديده للسلف', loanDebt) +
+      settleLine('الإجمالي', finalDebt).replace('settle-row', 'settle-row total');
   }
 
   const canAdd = !!currentTab && !!myIdentity && amountInput.value && parseFloat(amountInput.value) > 0;
@@ -1643,9 +1749,16 @@ leaveSessionBtn.onclick = async ()=>{
 amountInput.addEventListener('input', render);
 loanAmountInput.addEventListener('input', render);
 
+loanToggle.onclick = ()=>{
+  loansExpanded = !loansExpanded;
+  loanToggle.setAttribute('aria-expanded', loansExpanded ? 'true' : 'false');
+  loanBody.classList.toggle('hidden', !loansExpanded);
+};
+
 lendBtn.onclick = async ()=>{
   try{
     await addLoan(true);
+    loansExpanded = true;
     render();
   }catch(e){
     setBanner(e.message || 'تعذر حفظ السلفة.', 'error');
@@ -1655,6 +1768,7 @@ lendBtn.onclick = async ()=>{
 borrowBtn.onclick = async ()=>{
   try{
     await addLoan(false);
+    loansExpanded = true;
     render();
   }catch(e){
     setBanner(e.message || 'تعذر حفظ السلفة.', 'error');
