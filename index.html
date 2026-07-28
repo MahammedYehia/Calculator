@@ -62,6 +62,8 @@
   .brand{
     text-align:center;
     margin-bottom:4px;
+    cursor:pointer;
+    user-select:none;
   }
   .brand .mark{
     display:inline-flex;
@@ -643,7 +645,7 @@
 <body>
 
 <div class="receipt">
-  <div class="brand">
+  <div class="brand" id="brandHeader">
     <div class="mark">حـ</div>
     <h1>حساب الأكل</h1>
     <p id="subline">دفتر مشترك للمصاريف</p>
@@ -759,6 +761,7 @@ const stampTag = document.getElementById('stampTag');
 const resetBtn = document.getElementById('resetBtn');
 const statusMsg = document.getElementById('statusMsg');
 const subline = document.getElementById('subline');
+const brandHeader = document.getElementById('brandHeader');
 const syncWarning = document.getElementById('syncWarning');
 const joinCodeInput = document.getElementById('joinCode');
 const joinBtn = document.getElementById('joinBtn');
@@ -786,6 +789,8 @@ let expenses = [];
 let myIdentity = null;
 let pendingTs = null;
 let bannerTone = 'info';
+let bannerMessage = '';
+let brandPanelExpanded = false;
 let legacySnapshot = { names:null, expenses:[], identity:null };
 
 function hasSupabaseConfig(){
@@ -800,9 +805,20 @@ function fmt(n){
 }
 
 function setBanner(message, tone){
+  bannerMessage = message || '';
   bannerTone = tone || 'info';
-  syncWarning.textContent = message || '';
-  syncWarning.className = 'sync-warning' + (message ? '' : ' hidden') + (message ? ' ' + bannerTone : '');
+  syncWarning.textContent = bannerMessage;
+  updateHeaderDetailsVisibility();
+}
+
+function updateHeaderDetailsVisibility(){
+  const canTogglePanel = !!currentTab && !!myIdentity;
+  const shouldShowPanel = canTogglePanel && brandPanelExpanded;
+  const shouldShowBanner = !!bannerMessage && (shouldShowPanel || !canTogglePanel || (bannerTone !== 'success' && bannerTone !== 'info'));
+
+  syncWarning.className = 'sync-warning' + (shouldShowBanner ? ' ' + bannerTone : ' hidden');
+  sessionCard.classList.toggle('hidden', !shouldShowPanel);
+  meRow.classList.toggle('hidden', !shouldShowPanel);
 }
 
 function setStatus(message, timeout){
@@ -1229,10 +1245,12 @@ async function leaveSession(){
 function render(){
   migrateBox.classList.toggle('hidden', !(legacySnapshot.names || (legacySnapshot.expenses && legacySnapshot.expenses.length)));
   sessionCard.classList.add('hidden');
+  meRow.classList.add('hidden');
 
   if(!hasSupabaseConfig()){
     subline.textContent = 'أضف إعدادات Supabase لتفعيل المزامنة';
     setBanner('ضع `SUPABASE_URL` و `SUPABASE_ANON_KEY` داخل الصفحة أو على `window` قبل الاستخدام.', 'warning');
+    updateHeaderDetailsVisibility();
   }else if(currentTab && names){
     subline.textContent = names.a + ' × ' + names.b;
   }else{
@@ -1243,6 +1261,7 @@ function render(){
     setupEl.classList.remove('hidden');
     whoamiEl.classList.add('hidden');
     appEl.classList.add('hidden');
+    updateHeaderDetailsVisibility();
     return;
   }
   setupEl.classList.add('hidden');
@@ -1259,12 +1278,12 @@ function render(){
       btn.onclick = ()=> saveIdentity(key);
       whoamiRow.appendChild(btn);
     });
+    updateHeaderDetailsVisibility();
     return;
   }
 
   whoamiEl.classList.add('hidden');
   appEl.classList.remove('hidden');
-  sessionCard.classList.remove('hidden');
   sessionCode.textContent = currentTab.joinCode;
   sessionLinkNote.textContent = buildShareLink(currentTab.joinCode);
 
@@ -1337,6 +1356,7 @@ function render(){
 
   const canAdd = !!currentTab && !!myIdentity && amountInput.value && parseFloat(amountInput.value) > 0;
   addBtn.disabled = !canAdd;
+  updateHeaderDetailsVisibility();
 }
 
 function parsePaymentMessage(text){
@@ -1396,6 +1416,12 @@ joinBtn.onclick = async ()=>{
 joinCodeInput.addEventListener('input', ()=>{
   joinCodeInput.value = normalizeJoinCode(joinCodeInput.value);
 });
+
+brandHeader.onclick = ()=>{
+  if(!currentTab || !myIdentity) return;
+  brandPanelExpanded = !brandPanelExpanded;
+  updateHeaderDetailsVisibility();
+};
 
 copyLinkBtn.onclick = async ()=>{
   if(!currentTab) return;
