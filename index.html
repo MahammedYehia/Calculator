@@ -458,36 +458,42 @@
   .loan-body{
     margin-top:12px;
   }
-  .loan-columns{
+  .loan-columns,
+  .split-columns{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
     margin-top:12px;
   }
-  .loan-col{
+  .loan-col,
+  .split-col{
     min-width:0;
     background:var(--paper-alt);
     border:1px solid var(--line);
     border-radius:2px;
     padding:10px 8px;
   }
-  .loan-col-title{
+  .loan-col-title,
+  .split-col-title{
     text-align:center;
     font-size:12px;
     font-weight:700;
     margin:0 0 8px;
     color:var(--ink);
   }
-  .loan-col .line{
+  .loan-col .line,
+  .split-col .line{
     align-items:flex-start;
     padding:7px 0;
     font-size:12px;
   }
-  .loan-col .line-desc{
+  .loan-col .line-desc,
+  .split-col .line-desc{
     max-width:none;
     white-space:normal;
   }
-  .loan-col .empty{
+  .loan-col .empty,
+  .split-col .empty{
     padding:10px 0;
     font-size:11px;
   }
@@ -887,10 +893,10 @@
 
     <div class="settle-box" id="settleBox"></div>
 
-    <div class="footer-row">
+    <!-- <div class="footer-row">
       <span class="status" id="statusMsg">&nbsp;</span>
       <button class="reset-link" id="resetBtn">امسح كل الحساب</button>
-    </div>
+    </div> -->
   </div>
 </div>
 
@@ -1551,24 +1557,49 @@ function render(){
   if(expenses.length === 0){
     listEl.innerHTML = '<div class="empty">لسه مفيش حاجة متسجلة</div>';
   }else{
-    listEl.innerHTML = '';
-    [...expenses].sort((x, y)=> y.ts - x.ts).forEach((exp)=>{
-      const row = document.createElement('div');
-      row.className = 'line';
-      const dt = new Date(exp.ts);
-      const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
-      row.innerHTML = `
-        <div class="line-left">
-          <span class="line-desc">${exp.desc || 'بدون وصف'}</span>
-          <span class="line-meta">${names[exp.payer]} · ${dateStr}</span>
-        </div>
-        <div class="line-right">
-          <span class="line-amount">${fmt(exp.amount)}</span>
-          ${exp.payer === myIdentity ? `<button class="line-del" data-id="${exp.id}" aria-label="حذف">×</button>` : ''}
+    const expensesByA = expenses.filter((e)=> e.payer === 'a').sort((x, y)=> y.ts - x.ts);
+    const expensesByB = expenses.filter((e)=> e.payer === 'b').sort((x, y)=> y.ts - x.ts);
+
+    function renderExpenseColumn(title, items){
+      if(items.length === 0){
+        return `
+          <div class="split-col">
+            <p class="split-col-title">${title}</p>
+            <div class="empty">مفيش</div>
+          </div>
+        `;
+      }
+      const rows = items.map((exp)=>{
+        const dt = new Date(exp.ts);
+        const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
+        return `
+          <div class="line">
+            <div class="line-left">
+              <span class="line-desc">${exp.desc || 'بدون وصف'}</span>
+              <span class="line-meta">${dateStr}</span>
+            </div>
+            <div class="line-right">
+              <span class="line-amount">${fmt(exp.amount)}</span>
+              ${exp.payer === myIdentity ? `<button class="line-del" data-id="${exp.id}" aria-label="حذف">×</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="split-col">
+          <p class="split-col-title">${title} دفع</p>
+          ${rows}
         </div>
       `;
-      listEl.appendChild(row);
-    });
+    }
+
+    // RTL: first column on the right (names.a), second on the left (names.b)
+    listEl.innerHTML = `
+      <div class="split-columns">
+        ${renderExpenseColumn(names.a, expensesByA)}
+        ${renderExpenseColumn(names.b, expensesByB)}
+      </div>
+    `;
     listEl.querySelectorAll('.line-del').forEach((button)=>{
       button.onclick = async ()=>{
         try{
