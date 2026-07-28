@@ -40,6 +40,7 @@ create table if not exists public.loans (
   amount numeric(12,2) not null,
   ts bigint not null,
   deleted_at timestamptz null,
+  moved_to_food_at timestamptz null,
   created_at timestamptz not null default now(),
   constraint loans_lender_check check (lender in ('a', 'b')),
   constraint loans_borrower_check check (borrower in ('a', 'b')),
@@ -47,9 +48,13 @@ create table if not exists public.loans (
   constraint loans_amount_positive check (amount > 0)
 );
 
+alter table public.loans
+add column if not exists moved_to_food_at timestamptz null;
+
 create index if not exists loans_tab_id_idx on public.loans(tab_id);
 create index if not exists loans_tab_id_ts_idx on public.loans(tab_id, ts desc);
 create index if not exists loans_tab_id_deleted_at_idx on public.loans(tab_id, deleted_at);
+create index if not exists loans_tab_id_moved_to_food_at_idx on public.loans(tab_id, moved_to_food_at);
 
 create or replace function public.set_updated_at()
 returns trigger

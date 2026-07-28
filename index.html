@@ -522,6 +522,51 @@
   .loan-actions .add-btn.borrow{
     background:var(--ink);
   }
+  .line-move{
+    background:none;
+    border:1px solid var(--stamp-green);
+    color:var(--stamp-green);
+    font-size:10px;
+    font-weight:700;
+    padding:2px 6px;
+    border-radius:2px;
+    line-height:1.4;
+  }
+  .line-move:hover{
+    background:var(--stamp-green-soft);
+  }
+  .line-revert{
+    background:none;
+    border:1px solid var(--ink-soft);
+    color:var(--ink-soft);
+    font-size:10px;
+    font-weight:700;
+    padding:2px 6px;
+    border-radius:2px;
+    line-height:1.4;
+  }
+  .line-revert:hover{
+    border-color:var(--stamp-red);
+    color:var(--stamp-red);
+  }
+  .moved-tag{
+    display:inline-block;
+    margin-top:2px;
+    font-size:10px;
+    color:var(--stamp-green);
+    background:var(--stamp-green-soft);
+    border:1px solid var(--stamp-green);
+    border-radius:2px;
+    padding:1px 5px;
+  }
+  .settle-row.sub{
+    padding-top:6px;
+    padding-bottom:6px;
+    font-size:12px;
+  }
+  .settle-row.sub .settle-title{
+    font-weight:600;
+  }
   .settle-box{
     margin-top:8px;
   }
@@ -959,6 +1004,7 @@ let currentTab = null;
 let names = null;
 let expenses = [];
 let loans = [];
+let movedLoans = [];
 let myIdentity = null;
 let pendingTs = null;
 let bannerTone = 'info';
@@ -1121,7 +1167,8 @@ function normalizeLoan(row){
     borrower: row.borrower,
     desc: row.item_desc || '',
     amount: Number(row.amount),
-    ts: Number(row.ts)
+    ts: Number(row.ts),
+    movedToFoodAt: row.moved_to_food_at || null
   };
 }
 
@@ -1172,7 +1219,7 @@ async function fetchLoans(tabId){
   const client = await ensureSupabase();
   const { data, error } = await client
     .from('loans')
-    .select('id, lender, borrower, item_desc, amount, ts')
+    .select('id, lender, borrower, item_desc, amount, ts, moved_to_food_at')
     .eq('tab_id', tabId)
     .is('deleted_at', null)
     .order('ts', { ascending:false });
@@ -1185,6 +1232,7 @@ function hydrateCurrentTab(tabRow, expenseRows, loanRows){
   names = { a: currentTab.a, b: currentTab.b };
   expenses = expenseRows || [];
   loans = loanRows || [];
+  movedLoans = loans.filter((loan)=> !!loan.movedToFoodAt);
   myIdentity = localStorage.getItem(getIdentityStorageKey(currentTab.id));
   rememberActiveTab(currentTab);
   updateUrlForTab(currentTab.joinCode);
@@ -1421,6 +1469,7 @@ async function addExpense(){
 
 async function deleteExpense(id){
   if(!currentTab) return;
+  if(!confirm('متأكد إنك عايز تمسح المصروف ده؟')) return;
   setBanner('جاري حذف المصروف...', 'info');
   const client = await ensureSupabase();
   const { error } = await client
@@ -1480,6 +1529,7 @@ async function addLoan(iAmLender){
 
 async function deleteLoan(id){
   if(!currentTab) return;
+  if(!confirm('متأكد إنك عايز تمسح السلفة دي؟')) return;
   setBanner('جاري حذف السلفة...', 'info');
   const client = await ensureSupabase();
   const { error } = await client
@@ -1493,12 +1543,56 @@ async function deleteLoan(id){
   setBanner('تم حذف السلفة والمزامنة بنجاح.', 'success');
 }
 
+async function moveLoanToFood(id){
+  if(!currentTab) return;
+  const loan = loans.find((item)=> item.id === id);
+  if(!loan) throw new Error('السلفة مش موجودة.');
+  if(loan.movedToFoodAt) throw new Error('السلفة دي متنقولة بالفعل.');
+  if(!confirm(`هتنقل السلفة دي بالكامل (${fmt(loan.amount)}) لحساب الأكل بدون مناصفة. تكمل؟`)) return;
+
+  setBanner('جاري نقل السلفة لحساب الأكل...', 'info');
+  const client = await ensureSupabase();
+  const { error } = await client
+    .from('loans')
+    .update({ moved_to_food_at: new Date().toISOString() })
+    .eq('tab_id', currentTab.id)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .is('moved_to_food_at', null);
+  if(error) throw error;
+  await refreshCurrentTabData();
+  setStatus('تم نقل السلفة لحساب الأكل بالكامل', 1800);
+  setBanner('تم نقل السلفة إلى المطلوب تسديده للأكل بالكامل.', 'success');
+}
+
+async function revertLoanFromFood(id){
+  if(!currentTab) return;
+  const loan = loans.find((item)=> item.id === id);
+  if(!loan) throw new Error('السلفة مش موجودة.');
+  if(!loan.movedToFoodAt) throw new Error('السلفة دي مش متنقولة.');
+  if(!confirm('هترجع السلفة دي من حساب الأكل لوضع السلف العادي. تكمل؟')) return;
+
+  setBanner('جاري إرجاع السلفة...', 'info');
+  const client = await ensureSupabase();
+  const { error } = await client
+    .from('loans')
+    .update({ moved_to_food_at: null })
+    .eq('tab_id', currentTab.id)
+    .eq('id', id)
+    .is('deleted_at', null);
+  if(error) throw error;
+  await refreshCurrentTabData();
+  setStatus('تم إرجاع السلفة', 1500);
+  setBanner('تم إرجاع السلفة من حساب الأكل.', 'success');
+}
+
 async function leaveSession(){
   await stopRealtime();
   currentTab = null;
   names = null;
   expenses = [];
   loans = [];
+  movedLoans = [];
   myIdentity = null;
   forgetActiveTab();
   updateUrlForTab(null);
@@ -1560,8 +1654,8 @@ function render(){
     const expensesByA = expenses.filter((e)=> e.payer === 'a').sort((x, y)=> y.ts - x.ts);
     const expensesByB = expenses.filter((e)=> e.payer === 'b').sort((x, y)=> y.ts - x.ts);
 
-    function renderExpenseColumn(title, items){
-      if(items.length === 0){
+    function renderExpenseColumn(title, expenseItems){
+      if(expenseItems.length === 0){
         return `
           <div class="split-col">
             <p class="split-col-title">${title}</p>
@@ -1569,7 +1663,7 @@ function render(){
           </div>
         `;
       }
-      const rows = items.map((exp)=>{
+      const expenseRows = expenseItems.map((exp)=>{
         const dt = new Date(exp.ts);
         const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
         return `
@@ -1588,7 +1682,7 @@ function render(){
       return `
         <div class="split-col">
           <p class="split-col-title">${title} دفع</p>
-          ${rows}
+          ${expenseRows}
         </div>
       `;
     }
@@ -1631,16 +1725,20 @@ function render(){
       const rows = items.map((loan)=>{
         const dt = new Date(loan.ts);
         const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
-        const canDelete = loan.lender === myIdentity || loan.borrower === myIdentity;
+        const canAct = loan.lender === myIdentity || loan.borrower === myIdentity;
+        const isMoved = !!loan.movedToFoodAt;
         return `
           <div class="line">
             <div class="line-left">
               <span class="line-desc">${loan.desc || 'سلفة'}</span>
               <span class="line-meta">لـ ${names[loan.borrower]} · ${dateStr}</span>
+              ${isMoved ? '<span class="moved-tag">تم نقلها لحساب الأكل بالكامل</span>' : ''}
             </div>
             <div class="line-right">
               <span class="line-amount">${fmt(loan.amount)}</span>
-              ${canDelete ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
+              ${canAct && !isMoved ? `<button class="line-move" data-id="${loan.id}" type="button">نقل</button>` : ''}
+              ${canAct && isMoved ? `<button class="line-revert" data-id="${loan.id}" type="button">إرجاع</button>` : ''}
+              ${canAct ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
             </div>
           </div>
         `;
@@ -1669,9 +1767,28 @@ function render(){
         }
       };
     });
+    loanListEl.querySelectorAll('.line-move').forEach((button)=>{
+      button.onclick = async ()=>{
+        try{
+          await moveLoanToFood(button.getAttribute('data-id'));
+        }catch(e){
+          setBanner(e.message || 'تعذر نقل السلفة.', 'error');
+        }
+      };
+    });
+    loanListEl.querySelectorAll('.line-revert').forEach((button)=>{
+      button.onclick = async ()=>{
+        try{
+          await revertLoanFromFood(button.getAttribute('data-id'));
+        }catch(e){
+          setBanner(e.message || 'تعذر إرجاع السلفة.', 'error');
+        }
+      };
+    });
 
-    const loanAtoB = loans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0);
-    const loanBtoA = loans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0);
+    const activeLoans = loans.filter((l)=> !l.movedToFoodAt);
+    const loanAtoB = activeLoans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0);
+    const loanBtoA = activeLoans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0);
     const loanNet = fmt(loanAtoB - loanBtoA);
     if(Math.abs(loanNet) < 0.01){
       loanSummaryEl.innerHTML = 'السلف متعادلة حاليًا';
@@ -1698,17 +1815,24 @@ function render(){
     <div class="grand"><span>إجمالي الأكل</span><span>${fmt(grand)}</span></div>
   `;
 
-  const foodDebt = fmt((totalA - totalB) / 2);
+  const foodHalfDebt = fmt((totalA - totalB) / 2);
+  const movedFoodDebt = fmt(
+    movedLoans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0) -
+    movedLoans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
+  );
+  const foodDebt = fmt(foodHalfDebt + movedFoodDebt);
+  const activeLoans = loans.filter((l)=> !l.movedToFoodAt);
   const loanDebt = fmt(
-    loans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0) -
-    loans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
+    activeLoans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0) -
+    activeLoans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
   );
   const finalDebt = fmt(foodDebt + loanDebt);
 
-  function settleLine(title, debt){
+  function settleLine(title, debt, extraClass){
+    const rowClass = 'settle-row' + (extraClass ? ' ' + extraClass : '') + (Math.abs(debt) < 0.01 ? ' settled' : ' owed');
     if(Math.abs(debt) < 0.01){
       return `
-        <div class="settle-row settled">
+        <div class="${rowClass}">
           <div class="settle-label">
             <span class="settle-title">${title}</span>
             <span class="settle-who">متعادل</span>
@@ -1720,7 +1844,7 @@ function render(){
     const owerName = debt > 0 ? names.b : names.a;
     const owedName = debt > 0 ? names.a : names.b;
     return `
-      <div class="settle-row owed">
+      <div class="${rowClass}">
         <div class="settle-label">
           <span class="settle-title">${title}</span>
           <span class="settle-who">${owerName} علية / ل ${owedName}</span>
@@ -1741,10 +1865,15 @@ function render(){
       </div>
     `;
   }else{
+    let foodBlock = settleLine('المطلوب تسديده للأكل', foodHalfDebt);
+    if(movedLoans.length > 0){
+      foodBlock += settleLine('المنقول من السلف', movedFoodDebt, 'sub');
+      foodBlock += settleLine('مجموع الأكل + المنقول', foodDebt, 'sub');
+    }
     settleBox.innerHTML =
-      settleLine('المطلوب تسديده للأكل', foodDebt) +
+      foodBlock +
       settleLine('المطلوب تسديده للسلف', loanDebt) +
-      settleLine('الإجمالي', finalDebt).replace('settle-row', 'settle-row total');
+      settleLine('الإجمالي', finalDebt, 'total');
   }
 
   const canAdd = !!currentTab && !!myIdentity && amountInput.value && parseFloat(amountInput.value) > 0;
