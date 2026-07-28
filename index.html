@@ -97,6 +97,26 @@
     padding:6px 10px;
     font-family:'Cairo', sans-serif;
   }
+  .sync-warning.success{
+    color:var(--stamp-green);
+    background:var(--stamp-green-soft);
+    border-color:var(--stamp-green);
+  }
+  .sync-warning.info{
+    color:var(--ink);
+    background:var(--paper-alt);
+    border-color:var(--line);
+  }
+  .sync-warning.error{
+    color:var(--stamp-red);
+    background:var(--stamp-red-soft);
+    border-color:var(--stamp-red);
+  }
+  .sync-warning.warning{
+    color:var(--stamp-red);
+    background:var(--stamp-red-soft);
+    border-color:var(--stamp-red);
+  }
 
   .dashed{
     border:none;
@@ -140,6 +160,63 @@
     letter-spacing:0.5px;
   }
   .btn-main:active{ transform:translateY(1px); }
+  .btn-secondary{
+    width:100%;
+    margin-top:10px;
+    padding:11px;
+    background:var(--paper-alt);
+    color:var(--ink);
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    font-size:14px;
+    font-weight:700;
+  }
+  .setup-note{
+    margin:10px 0 0;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .or-divider{
+    margin:18px 0 10px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:11px;
+    letter-spacing:1px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .join-row{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .join-row input{
+    flex:1;
+    direction:ltr;
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:1px;
+  }
+  .join-row button{
+    flex:0 0 112px;
+    margin-top:0;
+  }
+  .migrate-box{
+    margin-top:14px;
+    padding:10px 12px;
+    background:var(--paper-alt);
+    border:1px dashed var(--line);
+    border-radius:2px;
+  }
+  .migrate-box p{
+    margin:0;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .migrate-box button{
+    margin-top:10px;
+  }
 
   /* add form */
   .payer-row{
@@ -184,6 +261,56 @@
     font-weight:400;
   }
   .me-row button:hover{ color:var(--stamp-red); }
+  .session-card{
+    margin-bottom:12px;
+    padding:10px 12px;
+    background:var(--paper-alt);
+    border:1.5px solid var(--line);
+    border-radius:2px;
+  }
+  .session-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .session-code{
+    display:inline-block;
+    direction:ltr;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color:var(--ink);
+    font-weight:700;
+  }
+  .session-head button{
+    border:none;
+    background:none;
+    color:var(--ink-soft);
+    text-decoration:underline;
+    font-size:11px;
+    padding:0;
+  }
+  .session-head button:hover{ color:var(--stamp-green); }
+  .session-link-note{
+    margin:8px 0 0;
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.7;
+  }
+  .session-actions{
+    margin-top:8px;
+    text-align:left;
+  }
+  .session-actions button{
+    border:none;
+    background:none;
+    color:var(--stamp-red);
+    text-decoration:underline;
+    font-size:11px;
+    padding:0;
+  }
   .field-row{
     display:flex;
     gap:8px;
@@ -406,7 +533,20 @@
     <input id="nameA" placeholder="مثلاً: أحمد" maxlength="20">
     <label>واسم صاحبك؟</label>
     <input id="nameB" placeholder="مثلاً: محمد" maxlength="20">
-    <button class="btn-main" id="startBtn">ابدأ الحساب</button>
+    <button class="btn-main" id="startBtn">أنشئ حسابًا مشتركًا</button>
+    <p class="setup-note">سيتم إنشاء جلسة متزامنة على Supabase ويمكنك إرسال الرابط لصاحبك ليفتح نفس الحساب من أي جهاز.</p>
+
+    <div class="migrate-box hidden" id="migrateBox">
+      <p id="migrateText">وجدت بيانات قديمة محفوظة على هذا الجهاز. تقدر ترفعها أول ما تنشئ الجلسة بدل ما تبدأ من الصفر.</p>
+      <button class="btn-secondary" id="migrateBtn" type="button">ارفع البيانات القديمة إلى السحابة</button>
+    </div>
+
+    <div class="or-divider">OR JOIN</div>
+    <label>عندك كود الجلسة؟</label>
+    <div class="join-row">
+      <input id="joinCode" placeholder="AB12CD34" maxlength="12">
+      <button class="btn-secondary" id="joinBtn" type="button">انضم</button>
+    </div>
   </div>
 
   <!-- WHOAMI -->
@@ -417,6 +557,16 @@
 
   <!-- APP -->
   <div id="app" class="hidden">
+    <div id="sessionCard" class="session-card hidden">
+      <div class="session-head">
+        <span>رمز الجلسة: <span id="sessionCode" class="session-code">-</span></span>
+        <button type="button" id="copyLinkBtn">انسخ الرابط</button>
+      </div>
+      <p class="session-link-note" id="sessionLinkNote">ابعت الرابط ده لصاحبك عشان يفتح نفس الحساب من أي جهاز.</p>
+      <div class="session-actions">
+        <button type="button" id="leaveSessionBtn">افصل هذا الجهاز عن الجلسة</button>
+      </div>
+    </div>
 
     <div class="me-row" id="meRow"></div>
 
@@ -457,6 +607,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const setupEl = document.getElementById('setup');
 const whoamiEl = document.getElementById('whoami');
@@ -483,94 +634,487 @@ const stampTag = document.getElementById('stampTag');
 const resetBtn = document.getElementById('resetBtn');
 const statusMsg = document.getElementById('statusMsg');
 const subline = document.getElementById('subline');
+const syncWarning = document.getElementById('syncWarning');
+const joinCodeInput = document.getElementById('joinCode');
+const joinBtn = document.getElementById('joinBtn');
+const sessionCard = document.getElementById('sessionCard');
+const sessionCode = document.getElementById('sessionCode');
+const sessionLinkNote = document.getElementById('sessionLinkNote');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
+const leaveSessionBtn = document.getElementById('leaveSessionBtn');
+const migrateBox = document.getElementById('migrateBox');
+const migrateBtn = document.getElementById('migrateBtn');
 
+const SUPABASE_URL = window.SUPABASE_URL || 'https://qmidagpgbgxcccohzesi.supabase.co'; //pass =>5Zi++HnPEm9#&Lq
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_yvSam6PenOMjnJkeT7zmlA_w0V65RN0';
+const ACTIVE_TAB_ID_KEY = 'current_tab_id';
+const ACTIVE_TAB_CODE_KEY = 'current_tab_code';
+const LEGACY_NAMES_KEY = 'tab_names';
+const LEGACY_EXPENSES_KEY = 'tab_expenses';
+const LEGACY_IDENTITY_KEY = 'my_identity';
+
+let supabaseClient = null;
+let realtimeChannel = null;
+let currentTab = null;
 let names = null;
 let expenses = [];
 let myIdentity = null;
 let pendingTs = null;
+let bannerTone = 'info';
+let legacySnapshot = { names:null, expenses:[], identity:null };
 
-const hasCloudStorage = (typeof window.storage !== 'undefined' && window.storage !== null);
-
-async function storageGet(key, shared){
-  if(hasCloudStorage){
-    return await window.storage.get(key, shared);
-  }
-  const raw = localStorage.getItem(key);
-  if(raw === null) throw new Error('not found');
-  return { key, value: raw, shared };
-}
-async function storageSet(key, value, shared){
-  if(hasCloudStorage){
-    return await window.storage.set(key, value, shared);
-  }
-  localStorage.setItem(key, value);
-  return { key, value, shared };
-}
-async function storageDelete(key, shared){
-  if(hasCloudStorage){
-    return await window.storage.delete(key, shared);
-  }
-  localStorage.removeItem(key);
-  return { key, deleted:true, shared };
+function hasSupabaseConfig(){
+  return SUPABASE_URL.startsWith('https://') &&
+    !SUPABASE_URL.includes('YOUR-PROJECT') &&
+    !!SUPABASE_ANON_KEY &&
+    !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
 }
 
 function fmt(n){
-  return Math.round(n * 100) / 100;
+  return Math.round(Number(n) * 100) / 100;
 }
 
-async function loadAll(){
-  try{
-    const n = await storageGet('tab_names', true);
-    names = n ? JSON.parse(n.value) : null;
-  }catch(e){ names = null; }
-
-  try{
-    const e = await storageGet('tab_expenses', true);
-    expenses = e ? JSON.parse(e.value) : [];
-  }catch(e){ expenses = []; }
-
-  try{
-    const id = await storageGet('my_identity', false);
-    myIdentity = id ? id.value : null;
-  }catch(e){ myIdentity = null; }
-
-  render();
+function setBanner(message, tone){
+  bannerTone = tone || 'info';
+  syncWarning.textContent = message || '';
+  syncWarning.className = 'sync-warning' + (message ? '' : ' hidden') + (message ? ' ' + bannerTone : '');
 }
 
-async function saveNames(){
+function setStatus(message, timeout){
+  statusMsg.textContent = message || '\u00a0';
+  if(message && timeout){
+    window.clearTimeout(setStatus._timer);
+    setStatus._timer = window.setTimeout(()=>{
+      statusMsg.textContent = '\u00a0';
+    }, timeout);
+  }
+}
+
+function normalizeJoinCode(value){
+  return (value || '').trim().replace(/\s+/g, '').toUpperCase();
+}
+
+function makeJoinCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i = 0; i < 8; i += 1){
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+function readJson(key, fallback){
   try{
-    await storageSet('tab_names', JSON.stringify(names), true);
-  }catch(e){ statusMsg.textContent = 'حصل خطأ في الحفظ'; }
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){
+    return fallback;
+  }
+}
+
+function loadLegacySnapshot(){
+  return {
+    names: readJson(LEGACY_NAMES_KEY, null),
+    expenses: readJson(LEGACY_EXPENSES_KEY, []),
+    identity: localStorage.getItem(LEGACY_IDENTITY_KEY)
+  };
+}
+
+function seedInputsFromLegacy(){
+  if(legacySnapshot.names){
+    nameAInput.value = legacySnapshot.names.a || '';
+    nameBInput.value = legacySnapshot.names.b || '';
+  }
+}
+
+function getIdentityStorageKey(tabId){
+  return tabId ? `my_identity:${tabId}` : LEGACY_IDENTITY_KEY;
 }
 
 async function saveIdentity(key){
   myIdentity = key;
-  try{
-    await storageSet('my_identity', key, false);
-  }catch(e){ statusMsg.textContent = 'حصل خطأ في الحفظ'; }
+  if(currentTab){
+    localStorage.setItem(getIdentityStorageKey(currentTab.id), key);
+  }else{
+    localStorage.setItem(LEGACY_IDENTITY_KEY, key);
+  }
   render();
 }
 
 async function clearIdentity(){
   myIdentity = null;
-  try{
-    await storageDelete('my_identity', false);
-  }catch(e){}
+  if(currentTab){
+    localStorage.removeItem(getIdentityStorageKey(currentTab.id));
+  }else{
+    localStorage.removeItem(LEGACY_IDENTITY_KEY);
+  }
   render();
 }
 
-async function saveExpenses(){
-  try{
-    await storageSet('tab_expenses', JSON.stringify(expenses), true);
-    statusMsg.textContent = 'اتحفظ';
-    setTimeout(()=>{ statusMsg.textContent = '\u00a0'; }, 1200);
-  }catch(e){ statusMsg.textContent = 'حصل خطأ في الحفظ'; }
+function rememberActiveTab(tab){
+  localStorage.setItem(ACTIVE_TAB_ID_KEY, tab.id);
+  localStorage.setItem(ACTIVE_TAB_CODE_KEY, tab.joinCode);
+}
+
+function forgetActiveTab(){
+  localStorage.removeItem(ACTIVE_TAB_ID_KEY);
+  localStorage.removeItem(ACTIVE_TAB_CODE_KEY);
+}
+
+function buildShareLink(joinCode){
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', joinCode);
+  return url.toString();
+}
+
+function updateUrlForTab(joinCode){
+  const url = new URL(window.location.href);
+  if(joinCode){
+    url.searchParams.set('tab', joinCode);
+  }else{
+    url.searchParams.delete('tab');
+  }
+  window.history.replaceState({}, '', url.toString());
+}
+
+async function ensureSupabase(){
+  if(supabaseClient) return supabaseClient;
+  if(!hasSupabaseConfig()){
+    throw new Error('أضف بيانات Supabase أولًا داخل الكود أو على window.');
+  }
+  if(!window.supabase || typeof window.supabase.createClient !== 'function'){
+    throw new Error('مكتبة Supabase لم تُحمّل بنجاح.');
+  }
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return supabaseClient;
+}
+
+function normalizeExpense(row){
+  return {
+    id: row.id,
+    payer: row.payer,
+    desc: row.desc || '',
+    amount: Number(row.amount),
+    ts: Number(row.ts)
+  };
+}
+
+function normalizeTab(row){
+  return {
+    id: row.id,
+    joinCode: row.join_code,
+    a: row.name_a,
+    b: row.name_b
+  };
+}
+
+async function fetchTabByCode(code){
+  const client = await ensureSupabase();
+  const { data, error } = await client
+    .from('shared_tabs')
+    .select('id, join_code, name_a, name_b')
+    .eq('join_code', code)
+    .maybeSingle();
+  if(error) throw error;
+  return data;
+}
+
+async function fetchTabById(tabId){
+  const client = await ensureSupabase();
+  const { data, error } = await client
+    .from('shared_tabs')
+    .select('id, join_code, name_a, name_b')
+    .eq('id', tabId)
+    .maybeSingle();
+  if(error) throw error;
+  return data;
+}
+
+async function fetchExpenses(tabId){
+  const client = await ensureSupabase();
+  const { data, error } = await client
+    .from('expenses')
+    .select('id, payer, desc, amount, ts')
+    .eq('tab_id', tabId)
+    .order('ts', { ascending:false });
+  if(error) throw error;
+  return (data || []).map(normalizeExpense);
+}
+
+function hydrateCurrentTab(tabRow, expenseRows){
+  currentTab = normalizeTab(tabRow);
+  names = { a: currentTab.a, b: currentTab.b };
+  expenses = expenseRows || [];
+  myIdentity = localStorage.getItem(getIdentityStorageKey(currentTab.id));
+  rememberActiveTab(currentTab);
+  updateUrlForTab(currentTab.joinCode);
+}
+
+async function refreshCurrentTabData(){
+  if(!currentTab) return;
+  const tabRow = await fetchTabById(currentTab.id);
+  if(!tabRow){
+    throw new Error('الجلسة لم تعد موجودة.');
+  }
+  const expenseRows = await fetchExpenses(currentTab.id);
+  hydrateCurrentTab(tabRow, expenseRows);
+  render();
+}
+
+async function stopRealtime(){
+  if(realtimeChannel && supabaseClient){
+    await supabaseClient.removeChannel(realtimeChannel);
+  }
+  realtimeChannel = null;
+}
+
+async function subscribeToCurrentTab(){
+  if(!currentTab) return;
+  const client = await ensureSupabase();
+  await stopRealtime();
+
+  realtimeChannel = client
+    .channel(`shared-tab-${currentTab.id}`)
+    .on('postgres_changes', {
+      event:'*',
+      schema:'public',
+      table:'shared_tabs',
+      filter:`id=eq.${currentTab.id}`
+    }, async ()=>{
+      try{
+        await refreshCurrentTabData();
+        setBanner('متصل والجلسة متزامنة بين الأجهزة.', 'success');
+      }catch(e){
+        setBanner(e.message || 'تعذر تحديث بيانات الجلسة.', 'error');
+      }
+    })
+    .on('postgres_changes', {
+      event:'*',
+      schema:'public',
+      table:'expenses',
+      filter:`tab_id=eq.${currentTab.id}`
+    }, async ()=>{
+      try{
+        await refreshCurrentTabData();
+        setBanner('تمت مزامنة آخر التغييرات.', 'success');
+      }catch(e){
+        setBanner(e.message || 'تعذر تحديث المصروفات.', 'error');
+      }
+    })
+    .subscribe((status)=>{
+      if(status === 'SUBSCRIBED'){
+        setBanner('متصل والجلسة متزامنة بين الأجهزة.', 'success');
+      }else if(status === 'CHANNEL_ERROR'){
+        setBanner('حصلت مشكلة في المزامنة الفورية، جرّب إعادة فتح الصفحة.', 'error');
+      }
+    });
+}
+
+async function openTab(tabRow){
+  const expenseRows = await fetchExpenses(tabRow.id);
+  hydrateCurrentTab(tabRow, expenseRows);
+  await subscribeToCurrentTab();
+  render();
+}
+
+async function joinSessionByCode(code){
+  const joinCode = normalizeJoinCode(code);
+  if(!joinCode){
+    throw new Error('اكتب كود الجلسة الأول.');
+  }
+  setBanner('جاري الاتصال بالجلسة...', 'info');
+  const tabRow = await fetchTabByCode(joinCode);
+  if(!tabRow){
+    throw new Error('الكود غير صحيح أو الجلسة غير موجودة.');
+  }
+  await openTab(tabRow);
+  setStatus('تم الاتصال بالجهاز الحالي مع الجلسة.', 1500);
+}
+
+async function reconnectLastTab(){
+  const storedId = localStorage.getItem(ACTIVE_TAB_ID_KEY);
+  const storedCode = localStorage.getItem(ACTIVE_TAB_CODE_KEY);
+  const codeFromUrl = normalizeJoinCode(new URL(window.location.href).searchParams.get('tab'));
+
+  if(codeFromUrl){
+    await joinSessionByCode(codeFromUrl);
+    return true;
+  }
+  if(storedId){
+    const tabRow = await fetchTabById(storedId);
+    if(tabRow){
+      await openTab(tabRow);
+      return true;
+    }
+  }
+  if(storedCode){
+    const tabRow = await fetchTabByCode(storedCode);
+    if(tabRow){
+      await openTab(tabRow);
+      return true;
+    }
+  }
+  return false;
+}
+
+function mapLegacyExpenses(){
+  return (legacySnapshot.expenses || [])
+    .filter((item)=> item && (item.payer === 'a' || item.payer === 'b') && Number(item.amount) > 0)
+    .map((item)=> ({
+      id: item.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+      payer: item.payer,
+      desc: item.desc || '',
+      amount: Number(item.amount),
+      ts: Number(item.ts) || Date.now()
+    }));
+}
+
+async function createSession(options){
+  const a = nameAInput.value.trim();
+  const b = nameBInput.value.trim();
+  if(!a || !b){
+    throw new Error('اكتب الاسمين الأول.');
+  }
+
+  const client = await ensureSupabase();
+  const shouldMigrate = !!(options && options.migrateLegacy);
+  const legacyExpenses = shouldMigrate ? mapLegacyExpenses() : [];
+
+  let tabRow = null;
+  let attempts = 0;
+  while(!tabRow && attempts < 5){
+    attempts += 1;
+    const code = makeJoinCode();
+    const { data, error } = await client
+      .from('shared_tabs')
+      .insert({
+        join_code: code,
+        name_a: a,
+        name_b: b
+      })
+      .select('id, join_code, name_a, name_b')
+      .single();
+
+    if(!error){
+      tabRow = data;
+      break;
+    }
+    if(!String(error.message || '').toLowerCase().includes('duplicate')){
+      throw error;
+    }
+  }
+
+  if(!tabRow){
+    throw new Error('تعذر إنشاء كود جلسة فريد. جرّب مرة ثانية.');
+  }
+
+  if(legacyExpenses.length){
+    const payload = legacyExpenses.map((item)=> ({
+      tab_id: tabRow.id,
+      id: item.id,
+      payer: item.payer,
+      desc: item.desc,
+      amount: item.amount,
+      ts: item.ts
+    }));
+    const { error } = await client.from('expenses').insert(payload);
+    if(error) throw error;
+  }
+
+  await openTab(tabRow);
+
+  if(legacySnapshot.identity === 'a' || legacySnapshot.identity === 'b'){
+    myIdentity = legacySnapshot.identity;
+    localStorage.setItem(getIdentityStorageKey(currentTab.id), legacySnapshot.identity);
+  }
+
+  setStatus(legacyExpenses.length ? 'تم إنشاء الجلسة ورفع البيانات القديمة.' : 'تم إنشاء الجلسة بنجاح.', 1800);
+}
+
+async function addExpense(){
+  const val = parseFloat(amountInput.value);
+  if(!currentTab || !myIdentity || !val || val <= 0) return;
+
+  const record = {
+    tab_id: currentTab.id,
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    payer: myIdentity,
+    desc: descInput.value.trim(),
+    amount: val,
+    ts: pendingTs || Date.now()
+  };
+
+  setBanner('جاري حفظ المصروف...', 'info');
+  const client = await ensureSupabase();
+  const { error } = await client.from('expenses').insert(record);
+  if(error) throw error;
+
+  descInput.value = '';
+  amountInput.value = '';
+  pasteArea.value = '';
+  pendingTs = null;
+  parseHint.textContent = '\u00a0';
+  parseHint.className = 'paste-hint';
+  pasteBox.classList.add('hidden');
+
+  await refreshCurrentTabData();
+  setStatus('اتحفظ', 1200);
+  setBanner('متصل والجلسة متزامنة بين الأجهزة.', 'success');
+}
+
+async function deleteExpense(id){
+  if(!currentTab) return;
+  setBanner('جاري حذف المصروف...', 'info');
+  const client = await ensureSupabase();
+  const { error } = await client
+    .from('expenses')
+    .delete()
+    .eq('tab_id', currentTab.id)
+    .eq('id', id);
+  if(error) throw error;
+  await refreshCurrentTabData();
+  setBanner('تم الحذف والمزامنة بنجاح.', 'success');
+}
+
+async function clearAllExpenses(){
+  if(!currentTab) return;
+  const client = await ensureSupabase();
+  setBanner('جاري مسح كل الحساب...', 'info');
+  const { error } = await client
+    .from('expenses')
+    .delete()
+    .eq('tab_id', currentTab.id);
+  if(error) throw error;
+  await refreshCurrentTabData();
+  setBanner('تم مسح كل الحساب من الجلسة.', 'success');
+}
+
+async function leaveSession(){
+  await stopRealtime();
+  currentTab = null;
+  names = null;
+  expenses = [];
+  myIdentity = null;
+  forgetActiveTab();
+  updateUrlForTab(null);
+  setBanner('تم فصل هذا الجهاز. يمكنك إنشاء جلسة جديدة أو الانضمام برمز آخر.', 'info');
+  render();
 }
 
 function render(){
-  document.getElementById('syncWarning').classList.toggle('hidden', hasCloudStorage);
+  migrateBox.classList.toggle('hidden', !(legacySnapshot.names || (legacySnapshot.expenses && legacySnapshot.expenses.length)));
+  sessionCard.classList.add('hidden');
 
-  if(!names){
+  if(!hasSupabaseConfig()){
+    subline.textContent = 'أضف إعدادات Supabase لتفعيل المزامنة';
+    setBanner('ضع `SUPABASE_URL` و `SUPABASE_ANON_KEY` داخل الصفحة أو على `window` قبل الاستخدام.', 'warning');
+  }else if(currentTab && names){
+    subline.textContent = names.a + ' × ' + names.b;
+  }else{
+    subline.textContent = 'دفتر مشترك متزامن بين الأجهزة';
+  }
+
+  if(!currentTab || !names){
     setupEl.classList.remove('hidden');
     whoamiEl.classList.add('hidden');
     appEl.classList.add('hidden');
@@ -582,7 +1126,7 @@ function render(){
     whoamiEl.classList.remove('hidden');
     appEl.classList.add('hidden');
     whoamiRow.innerHTML = '';
-    ['a','b'].forEach(key=>{
+    ['a','b'].forEach((key)=>{
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'payer-btn';
@@ -595,7 +1139,9 @@ function render(){
 
   whoamiEl.classList.add('hidden');
   appEl.classList.remove('hidden');
-  subline.textContent = names.a + ' × ' + names.b;
+  sessionCard.classList.remove('hidden');
+  sessionCode.textContent = currentTab.joinCode;
+  sessionLinkNote.textContent = buildShareLink(currentTab.joinCode);
 
   meRow.innerHTML = `<span>بتسجل باسم ${names[myIdentity]}</span><button id="notMeBtn">مش أنا</button>`;
   document.getElementById('notMeBtn').onclick = clearIdentity;
@@ -604,11 +1150,11 @@ function render(){
     listEl.innerHTML = '<div class="empty">لسه مفيش حاجة متسجلة</div>';
   }else{
     listEl.innerHTML = '';
-    [...expenses].sort((x,y)=> y.ts - x.ts).forEach(exp=>{
+    [...expenses].sort((x, y)=> y.ts - x.ts).forEach((exp)=>{
       const row = document.createElement('div');
       row.className = 'line';
       const dt = new Date(exp.ts);
-      const dateStr = dt.toLocaleDateString('ar-EG', {day:'numeric', month:'short'});
+      const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
       row.innerHTML = `
         <div class="line-left">
           <span class="line-desc">${exp.desc || 'بدون وصف'}</span>
@@ -621,13 +1167,19 @@ function render(){
       `;
       listEl.appendChild(row);
     });
-    listEl.querySelectorAll('.line-del').forEach(b=>{
-      b.onclick = ()=> deleteExpense(b.getAttribute('data-id'));
+    listEl.querySelectorAll('.line-del').forEach((button)=>{
+      button.onclick = async ()=>{
+        try{
+          await deleteExpense(button.getAttribute('data-id'));
+        }catch(e){
+          setBanner(e.message || 'تعذر حذف المصروف.', 'error');
+        }
+      };
     });
   }
 
-  const totalA = expenses.filter(e=>e.payer==='a').reduce((s,e)=>s+e.amount,0);
-  const totalB = expenses.filter(e=>e.payer==='b').reduce((s,e)=>s+e.amount,0);
+  const totalA = expenses.filter((e)=> e.payer === 'a').reduce((sum, item)=> sum + item.amount, 0);
+  const totalB = expenses.filter((e)=> e.payer === 'b').reduce((sum, item)=> sum + item.amount, 0);
   const grand = totalA + totalB;
 
   totalsBox.innerHTML = `
@@ -658,27 +1210,9 @@ function render(){
     stampTag.textContent = 'المطلوب تسديده';
   }
 
-  const canAdd = amountInput.value && parseFloat(amountInput.value) > 0;
+  const canAdd = !!currentTab && !!myIdentity && amountInput.value && parseFloat(amountInput.value) > 0;
   addBtn.disabled = !canAdd;
 }
-
-startBtn.onclick = async ()=>{
-  const a = nameAInput.value.trim();
-  const b = nameBInput.value.trim();
-  if(!a || !b){
-    statusMsg.textContent = 'اكتب الاسمين الأول';
-    return;
-  }
-  names = {a, b};
-  await saveNames();
-  render();
-};
-
-amountInput.addEventListener('input', render);
-
-pasteToggle.onclick = ()=>{
-  pasteBox.classList.toggle('hidden');
-};
 
 function parsePaymentMessage(text){
   const result = { amount:null, merchant:null, ts:null };
@@ -697,16 +1231,68 @@ function parsePaymentMessage(text){
   const dateMatch = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2}))?/);
   if(dateMatch){
     let [, d, mo, y, h, mi] = dateMatch;
-    d = parseInt(d); mo = parseInt(mo); y = parseInt(y);
+    d = parseInt(d, 10);
+    mo = parseInt(mo, 10);
+    y = parseInt(y, 10);
     if(y < 100) y += 2000;
-    h = h ? parseInt(h) : 12;
-    mi = mi ? parseInt(mi) : 0;
+    h = h ? parseInt(h, 10) : 12;
+    mi = mi ? parseInt(mi, 10) : 0;
     const dt = new Date(y, mo - 1, d, h, mi);
-    if(!isNaN(dt.getTime())) result.ts = dt.getTime();
+    if(!Number.isNaN(dt.getTime())) result.ts = dt.getTime();
   }
 
   return result;
 }
+
+startBtn.onclick = async ()=>{
+  try{
+    await createSession({ migrateLegacy:false });
+  }catch(e){
+    setBanner(e.message || 'تعذر إنشاء الجلسة.', 'error');
+  }
+};
+
+migrateBtn.onclick = async ()=>{
+  try{
+    await createSession({ migrateLegacy:true });
+  }catch(e){
+    setBanner(e.message || 'تعذر رفع البيانات القديمة.', 'error');
+  }
+};
+
+joinBtn.onclick = async ()=>{
+  try{
+    await joinSessionByCode(joinCodeInput.value);
+  }catch(e){
+    setBanner(e.message || 'تعذر الانضمام للجلسة.', 'error');
+  }
+};
+
+joinCodeInput.addEventListener('input', ()=>{
+  joinCodeInput.value = normalizeJoinCode(joinCodeInput.value);
+});
+
+copyLinkBtn.onclick = async ()=>{
+  if(!currentTab) return;
+  const shareLink = buildShareLink(currentTab.joinCode);
+  try{
+    await navigator.clipboard.writeText(shareLink);
+    setStatus('تم نسخ الرابط', 1200);
+  }catch(e){
+    setStatus('انسخ الرابط يدويًا من الصندوق بالأعلى', 2200);
+  }
+};
+
+leaveSessionBtn.onclick = async ()=>{
+  if(!confirm('هتفصل الجهاز الحالي من الجلسة، لكن البيانات ستظل محفوظة على Supabase. تكمل؟')) return;
+  await leaveSession();
+};
+
+amountInput.addEventListener('input', render);
+
+pasteToggle.onclick = ()=>{
+  pasteBox.classList.toggle('hidden');
+};
 
 parseBtn.onclick = ()=>{
   const text = pasteArea.value.trim();
@@ -740,40 +1326,48 @@ parseBtn.onclick = ()=>{
 };
 
 addBtn.onclick = async ()=>{
-  const val = parseFloat(amountInput.value);
-  if(!val || val <= 0) return;
-  expenses.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    payer: myIdentity,
-    desc: descInput.value.trim(),
-    amount: val,
-    ts: pendingTs || Date.now()
-  });
-  descInput.value = '';
-  amountInput.value = '';
-  pasteArea.value = '';
-  pendingTs = null;
-  parseHint.textContent = '\u00a0';
-  parseHint.className = 'paste-hint';
-  pasteBox.classList.add('hidden');
-  await saveExpenses();
-  render();
+  try{
+    await addExpense();
+    render();
+  }catch(e){
+    setBanner(e.message || 'تعذر حفظ المصروف.', 'error');
+  }
 };
-
-async function deleteExpense(id){
-  expenses = expenses.filter(e=>e.id !== id);
-  await saveExpenses();
-  render();
-}
 
 resetBtn.onclick = async ()=>{
-  if(!confirm('متأكد إنك عايز تمسح كل الحساب؟ الخطوة دي مش هترجع')) return;
-  expenses = [];
-  await saveExpenses();
-  render();
+  if(!confirm('متأكد إنك عايز تمسح كل الحساب؟ الخطوة دي هتتم على كل الأجهزة.')) return;
+  try{
+    await clearAllExpenses();
+    render();
+  }catch(e){
+    setBanner(e.message || 'تعذر مسح الحساب.', 'error');
+  }
 };
 
-loadAll();
+async function boot(){
+  legacySnapshot = loadLegacySnapshot();
+  seedInputsFromLegacy();
+  render();
+
+  if(!hasSupabaseConfig()){
+    return;
+  }
+
+  try{
+    await ensureSupabase();
+    const connected = await reconnectLastTab();
+    if(!connected){
+      setBanner('أنشئ جلسة جديدة أو انضم برمز موجود، وكل التغييرات ستتزامن عبر Supabase.', 'info');
+      render();
+    }
+  }catch(e){
+    forgetActiveTab();
+    setBanner(e.message || 'تعذر الاتصال بـ Supabase.', 'error');
+    render();
+  }
+}
+
+boot();
 </script>
 
 </body>
