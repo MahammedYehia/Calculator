@@ -458,6 +458,39 @@
   .loan-body{
     margin-top:12px;
   }
+  .loan-columns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+  }
+  .loan-col{
+    min-width:0;
+    background:var(--paper-alt);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:10px 8px;
+  }
+  .loan-col-title{
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .loan-col .line{
+    align-items:flex-start;
+    padding:7px 0;
+    font-size:12px;
+  }
+  .loan-col .line-desc{
+    max-width:none;
+    white-space:normal;
+  }
+  .loan-col .empty{
+    padding:10px 0;
+    font-size:11px;
+  }
   .loan-summary{
     margin-top:10px;
     font-size:12px;
@@ -1552,25 +1585,50 @@ function render(){
     loanSummaryEl.textContent = '';
     loanToggleMeta.textContent = '';
   }else{
-    loanListEl.innerHTML = '';
-    [...loans].sort((x, y)=> y.ts - x.ts).forEach((loan)=>{
-      const row = document.createElement('div');
-      row.className = 'line';
-      const dt = new Date(loan.ts);
-      const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
-      const canDelete = loan.lender === myIdentity || loan.borrower === myIdentity;
-      row.innerHTML = `
-        <div class="line-left">
-          <span class="line-desc">${loan.desc || 'سلفة'}</span>
-          <span class="line-meta">${names[loan.lender]} سلف ${names[loan.borrower]} · ${dateStr}</span>
-        </div>
-        <div class="line-right">
-          <span class="line-amount">${fmt(loan.amount)}</span>
-          ${canDelete ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
+    const loansByA = loans.filter((l)=> l.lender === 'a').sort((x, y)=> y.ts - x.ts);
+    const loansByB = loans.filter((l)=> l.lender === 'b').sort((x, y)=> y.ts - x.ts);
+
+    function renderLoanColumn(title, items){
+      if(items.length === 0){
+        return `
+          <div class="loan-col">
+            <p class="loan-col-title">${title}</p>
+            <div class="empty">مفيش</div>
+          </div>
+        `;
+      }
+      const rows = items.map((loan)=>{
+        const dt = new Date(loan.ts);
+        const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
+        const canDelete = loan.lender === myIdentity || loan.borrower === myIdentity;
+        return `
+          <div class="line">
+            <div class="line-left">
+              <span class="line-desc">${loan.desc || 'سلفة'}</span>
+              <span class="line-meta">لـ ${names[loan.borrower]} · ${dateStr}</span>
+            </div>
+            <div class="line-right">
+              <span class="line-amount">${fmt(loan.amount)}</span>
+              ${canDelete ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="loan-col">
+          <p class="loan-col-title">${title} سلف</p>
+          ${rows}
         </div>
       `;
-      loanListEl.appendChild(row);
-    });
+    }
+
+    // RTL: first column appears on the right (names.a), second on the left (names.b)
+    loanListEl.innerHTML = `
+      <div class="loan-columns">
+        ${renderLoanColumn(names.a, loansByA)}
+        ${renderLoanColumn(names.b, loansByB)}
+      </div>
+    `;
     loanListEl.querySelectorAll('.line-del').forEach((button)=>{
       button.onclick = async ()=>{
         try{
@@ -1634,7 +1692,7 @@ function render(){
       <div class="settle-row owed">
         <div class="settle-label">
           <span class="settle-title">${title}</span>
-          <span class="settle-who">${owerName} على ${owedName}</span>
+          <span class="settle-who">${owerName} علية / ل ${owedName}</span>
         </div>
         <span class="settle-amt">${fmt(Math.abs(debt))}</span>
       </div>
