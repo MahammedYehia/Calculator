@@ -637,6 +637,22 @@
   .settle-row.owed .settle-amt{
     color:var(--stamp-red);
   }
+  .settle-actions{
+    margin-top:8px;
+    text-align:left;
+  }
+  .settle-clear-btn{
+    background:none;
+    border:1.5px solid var(--stamp-red);
+    color:var(--stamp-red);
+    border-radius:2px;
+    font-size:12px;
+    font-weight:700;
+    padding:7px 12px;
+  }
+  .settle-clear-btn:hover{
+    background:var(--stamp-red-soft);
+  }
 
   /* summary */
   .totals{
@@ -1521,6 +1537,48 @@ async function clearAllExpenses(){
   setBanner('تم مسح كل الحساب من الجلسة.', 'success');
 }
 
+async function settleFoodAccount(){
+  if(!currentTab) return;
+  const liveExpenseCount = expenses.filter((e)=> !e.deletedAt).length;
+  const movedLoanCount = movedLoans.length;
+  if(liveExpenseCount === 0 && movedLoanCount === 0){
+    throw new Error('مفيش حساب أكل أو سلف منقولة للتصفية.');
+  }
+
+  const parts = [];
+  if(liveExpenseCount) parts.push(`${liveExpenseCount} مصروف أكل`);
+  if(movedLoanCount) parts.push(`${movedLoanCount} سلفة منقولة`);
+  if(!confirm(`تصفية حساب الأكل هتمسح: ${parts.join(' و ')}. السلف العادية مش هتتأثر. تكمل؟`)) return;
+
+  setBanner('جاري تصفية حساب الأكل...', 'info');
+  const client = await ensureSupabase();
+  const deletedAt = new Date().toISOString();
+
+  if(liveExpenseCount > 0){
+    const { error } = await client
+      .from('expenses')
+      .update({ deleted_at: deletedAt })
+      .eq('tab_id', currentTab.id)
+      .is('deleted_at', null);
+    if(error) throw error;
+  }
+
+  if(movedLoanCount > 0){
+    const movedIds = movedLoans.map((loan)=> loan.id);
+    const { error } = await client
+      .from('loans')
+      .update({ deleted_at: deletedAt })
+      .eq('tab_id', currentTab.id)
+      .in('id', movedIds)
+      .is('deleted_at', null);
+    if(error) throw error;
+  }
+
+  await refreshCurrentTabData();
+  setStatus('تمت تصفية حساب الأكل', 1800);
+  setBanner('تمت تصفية حساب الأكل: اتمسح دفع الأكل والسلف المنقولة.', 'success');
+}
+
 async function addLoan(iAmLender){
   const val = parseFloat(loanAmountInput.value);
   if(!currentTab || !myIdentity || !val || val <= 0) return;
@@ -1896,15 +1954,34 @@ function render(){
       </div>
     `;
   }else{
+    const canSettleFood = liveExpenses.length > 0 || movedLoans.length > 0;
     let foodBlock = settleLine('المطلوب تسديده للأكل', foodHalfDebt);
     if(movedLoans.length > 0){
       foodBlock += settleLine('المنقول من السلف', movedFoodDebt, 'sub');
       foodBlock += settleLine('مجموع الأكل + المنقول', foodDebt, 'sub');
     }
+    if(canSettleFood){
+      foodBlock += `
+        <div class="settle-actions">
+          <button type="button" class="settle-clear-btn" id="settleFoodBtn">تصفية حساب الأكل</button>
+        </div>
+      `;
+    }
     settleBox.innerHTML =
       foodBlock +
       settleLine('المطلوب تسديده للسلف', loanDebt) +
       settleLine('الإجمالي', finalDebt, 'total');
+
+    const settleFoodBtn = document.getElementById('settleFoodBtn');
+    if(settleFoodBtn){
+      settleFoodBtn.onclick = async ()=>{
+        try{
+          await settleFoodAccount();
+        }catch(e){
+          setBanner(e.message || 'تعذر تصفية حساب الأكل.', 'error');
+        }
+      };
+    }
   }
 
   const canAdd = !!currentTab && !!myIdentity && amountInput.value && parseFloat(amountInput.value) > 0;
