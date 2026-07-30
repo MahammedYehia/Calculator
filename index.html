@@ -559,6 +559,30 @@
     border-radius:2px;
     padding:1px 5px;
   }
+  .line.deleted{
+    opacity:0.85;
+    color:var(--stamp-red);
+  }
+  .line.deleted .line-desc,
+  .line.deleted .line-meta,
+  .line.deleted .line-amount{
+    color:var(--stamp-red);
+    text-decoration:line-through;
+  }
+  .line.deleted .line-meta{
+    text-decoration:none;
+  }
+  .deleted-tag{
+    display:inline-block;
+    margin-top:2px;
+    font-size:10px;
+    font-weight:700;
+    color:var(--stamp-red);
+    background:var(--stamp-red-soft);
+    border:1px solid var(--stamp-red);
+    border-radius:2px;
+    padding:1px 5px;
+  }
   .settle-row.sub{
     padding-top:6px;
     padding-bottom:6px;
@@ -1156,7 +1180,8 @@ function normalizeExpense(row){
     payer: row.payer,
     desc: row.item_desc || '',
     amount: Number(row.amount),
-    ts: Number(row.ts)
+    ts: Number(row.ts),
+    deletedAt: row.deleted_at || null
   };
 }
 
@@ -1168,7 +1193,8 @@ function normalizeLoan(row){
     desc: row.item_desc || '',
     amount: Number(row.amount),
     ts: Number(row.ts),
-    movedToFoodAt: row.moved_to_food_at || null
+    movedToFoodAt: row.moved_to_food_at || null,
+    deletedAt: row.deleted_at || null
   };
 }
 
@@ -1207,9 +1233,8 @@ async function fetchExpenses(tabId){
   const client = await ensureSupabase();
   const { data, error } = await client
     .from('expenses')
-    .select('id, payer, item_desc, amount, ts')
+    .select('id, payer, item_desc, amount, ts, deleted_at')
     .eq('tab_id', tabId)
-    .is('deleted_at', null)
     .order('ts', { ascending:false });
   if(error) throw error;
   return (data || []).map(normalizeExpense);
@@ -1219,9 +1244,8 @@ async function fetchLoans(tabId){
   const client = await ensureSupabase();
   const { data, error } = await client
     .from('loans')
-    .select('id, lender, borrower, item_desc, amount, ts, moved_to_food_at')
+    .select('id, lender, borrower, item_desc, amount, ts, moved_to_food_at, deleted_at')
     .eq('tab_id', tabId)
-    .is('deleted_at', null)
     .order('ts', { ascending:false });
   if(error) throw error;
   return (data || []).map(normalizeLoan);
@@ -1232,7 +1256,7 @@ function hydrateCurrentTab(tabRow, expenseRows, loanRows){
   names = { a: currentTab.a, b: currentTab.b };
   expenses = expenseRows || [];
   loans = loanRows || [];
-  movedLoans = loans.filter((loan)=> !!loan.movedToFoodAt);
+  movedLoans = loans.filter((loan)=> !!loan.movedToFoodAt && !loan.deletedAt);
   myIdentity = localStorage.getItem(getIdentityStorageKey(currentTab.id));
   rememberActiveTab(currentTab);
   updateUrlForTab(currentTab.joinCode);
@@ -1547,6 +1571,7 @@ async function moveLoanToFood(id){
   if(!currentTab) return;
   const loan = loans.find((item)=> item.id === id);
   if(!loan) throw new Error('السلفة مش موجودة.');
+  if(loan.deletedAt) throw new Error('السلفة دي محذوفة.');
   if(loan.movedToFoodAt) throw new Error('السلفة دي متنقولة بالفعل.');
   if(!confirm(`هتنقل السلفة دي بالكامل (${fmt(loan.amount)}) لحساب الأكل بدون مناصفة. تكمل؟`)) return;
 
@@ -1651,8 +1676,8 @@ function render(){
   if(expenses.length === 0){
     listEl.innerHTML = '<div class="empty">لسه مفيش حاجة متسجلة</div>';
   }else{
-    const expensesByA = expenses.filter((e)=> e.payer === 'a').sort((x, y)=> y.ts - x.ts);
-    const expensesByB = expenses.filter((e)=> e.payer === 'b').sort((x, y)=> y.ts - x.ts);
+    const expensesByA = expenses.filter((e)=> e.payer === 'a').sort((x, y)=> Number(!!x.deletedAt) - Number(!!y.deletedAt) || y.ts - x.ts);
+    const expensesByB = expenses.filter((e)=> e.payer === 'b').sort((x, y)=> Number(!!x.deletedAt) - Number(!!y.deletedAt) || y.ts - x.ts);
 
     function renderExpenseColumn(title, expenseItems){
       if(expenseItems.length === 0){
@@ -1666,15 +1691,17 @@ function render(){
       const expenseRows = expenseItems.map((exp)=>{
         const dt = new Date(exp.ts);
         const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
+        const isDeleted = !!exp.deletedAt;
         return `
-          <div class="line">
+          <div class="line${isDeleted ? ' deleted' : ''}">
             <div class="line-left">
               <span class="line-desc">${exp.desc || 'بدون وصف'}</span>
               <span class="line-meta">${dateStr}</span>
+              ${isDeleted ? '<span class="deleted-tag">محذوف</span>' : ''}
             </div>
             <div class="line-right">
               <span class="line-amount">${fmt(exp.amount)}</span>
-              ${exp.payer === myIdentity ? `<button class="line-del" data-id="${exp.id}" aria-label="حذف">×</button>` : ''}
+              ${!isDeleted && exp.payer === myIdentity ? `<button class="line-del" data-id="${exp.id}" aria-label="حذف">×</button>` : ''}
             </div>
           </div>
         `;
@@ -1710,8 +1737,8 @@ function render(){
     loanSummaryEl.textContent = '';
     loanToggleMeta.textContent = '';
   }else{
-    const loansByA = loans.filter((l)=> l.lender === 'a').sort((x, y)=> y.ts - x.ts);
-    const loansByB = loans.filter((l)=> l.lender === 'b').sort((x, y)=> y.ts - x.ts);
+    const loansByA = loans.filter((l)=> l.lender === 'a').sort((x, y)=> Number(!!x.deletedAt) - Number(!!y.deletedAt) || y.ts - x.ts);
+    const loansByB = loans.filter((l)=> l.lender === 'b').sort((x, y)=> Number(!!x.deletedAt) - Number(!!y.deletedAt) || y.ts - x.ts);
 
     function renderLoanColumn(title, items){
       if(items.length === 0){
@@ -1727,18 +1754,20 @@ function render(){
         const dateStr = dt.toLocaleDateString('ar-EG', { day:'numeric', month:'short' });
         const canAct = loan.lender === myIdentity || loan.borrower === myIdentity;
         const isMoved = !!loan.movedToFoodAt;
+        const isDeleted = !!loan.deletedAt;
         return `
-          <div class="line">
+          <div class="line${isDeleted ? ' deleted' : ''}">
             <div class="line-left">
               <span class="line-desc">${loan.desc || 'سلفة'}</span>
               <span class="line-meta">لـ ${names[loan.borrower]} · ${dateStr}</span>
-              ${isMoved ? '<span class="moved-tag">تم نقلها لحساب الأكل بالكامل</span>' : ''}
+              ${isDeleted ? '<span class="deleted-tag">محذوف</span>' : ''}
+              ${!isDeleted && isMoved ? '<span class="moved-tag">تم نقلها لحساب الأكل بالكامل</span>' : ''}
             </div>
             <div class="line-right">
               <span class="line-amount">${fmt(loan.amount)}</span>
-              ${canAct && !isMoved ? `<button class="line-move" data-id="${loan.id}" type="button">نقل</button>` : ''}
-              ${canAct && isMoved ? `<button class="line-revert" data-id="${loan.id}" type="button">إرجاع</button>` : ''}
-              ${canAct ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
+              ${canAct && !isDeleted && !isMoved ? `<button class="line-move" data-id="${loan.id}" type="button">نقل</button>` : ''}
+              ${canAct && !isDeleted && isMoved ? `<button class="line-revert" data-id="${loan.id}" type="button">إرجاع</button>` : ''}
+              ${canAct && !isDeleted ? `<button class="line-del" data-id="${loan.id}" aria-label="حذف">×</button>` : ''}
             </div>
           </div>
         `;
@@ -1786,27 +1815,29 @@ function render(){
       };
     });
 
-    const activeLoans = loans.filter((l)=> !l.movedToFoodAt);
+    const activeLoans = loans.filter((l)=> !l.deletedAt && !l.movedToFoodAt);
     const loanAtoB = activeLoans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0);
     const loanBtoA = activeLoans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0);
     const loanNet = fmt(loanAtoB - loanBtoA);
+    const liveLoanCount = loans.filter((l)=> !l.deletedAt).length;
     if(Math.abs(loanNet) < 0.01){
       loanSummaryEl.innerHTML = 'السلف متعادلة حاليًا';
-      loanToggleMeta.textContent = `(${loans.length})`;
+      loanToggleMeta.textContent = `(${liveLoanCount})`;
     }else if(loanNet > 0){
       loanSummaryEl.innerHTML = `${names.b} على ${names.a} من السلف: <strong>${fmt(Math.abs(loanNet))}</strong>`;
-      loanToggleMeta.textContent = `(${loans.length} · ${fmt(Math.abs(loanNet))})`;
+      loanToggleMeta.textContent = `(${liveLoanCount} · ${fmt(Math.abs(loanNet))})`;
     }else{
       loanSummaryEl.innerHTML = `${names.a} على ${names.b} من السلف: <strong>${fmt(Math.abs(loanNet))}</strong>`;
-      loanToggleMeta.textContent = `(${loans.length} · ${fmt(Math.abs(loanNet))})`;
+      loanToggleMeta.textContent = `(${liveLoanCount} · ${fmt(Math.abs(loanNet))})`;
     }
   }
 
   loanToggle.setAttribute('aria-expanded', loansExpanded ? 'true' : 'false');
   loanBody.classList.toggle('hidden', !loansExpanded);
 
-  const totalA = expenses.filter((e)=> e.payer === 'a').reduce((sum, item)=> sum + item.amount, 0);
-  const totalB = expenses.filter((e)=> e.payer === 'b').reduce((sum, item)=> sum + item.amount, 0);
+  const liveExpenses = expenses.filter((e)=> !e.deletedAt);
+  const totalA = liveExpenses.filter((e)=> e.payer === 'a').reduce((sum, item)=> sum + item.amount, 0);
+  const totalB = liveExpenses.filter((e)=> e.payer === 'b').reduce((sum, item)=> sum + item.amount, 0);
   const grand = totalA + totalB;
 
   totalsBox.innerHTML = `
@@ -1821,7 +1852,7 @@ function render(){
     movedLoans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
   );
   const foodDebt = fmt(foodHalfDebt + movedFoodDebt);
-  const activeLoans = loans.filter((l)=> !l.movedToFoodAt);
+  const activeLoans = loans.filter((l)=> !l.deletedAt && !l.movedToFoodAt);
   const loanDebt = fmt(
     activeLoans.filter((l)=> l.lender === 'a' && l.borrower === 'b').reduce((sum, item)=> sum + item.amount, 0) -
     activeLoans.filter((l)=> l.lender === 'b' && l.borrower === 'a').reduce((sum, item)=> sum + item.amount, 0)
@@ -1854,7 +1885,7 @@ function render(){
     `;
   }
 
-  if(expenses.length === 0 && loans.length === 0){
+  if(liveExpenses.length === 0 && loans.every((l)=> !!l.deletedAt)){
     settleBox.innerHTML = `
       <div class="settle-row settled">
         <div class="settle-label">
