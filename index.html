@@ -1051,6 +1051,7 @@ let bannerTone = 'info';
 let bannerMessage = '';
 let brandPanelExpanded = false;
 let loansExpanded = false;
+let recentLocalIds = new Set();
 let legacySnapshot = { names:null, expenses:[], identity:null };
 
 function hasSupabaseConfig(){
@@ -1095,13 +1096,59 @@ function normalizeJoinCode(value){
   return (value || '').trim().replace(/\s+/g, '').toUpperCase();
 }
 
-function makeJoinCode(){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for(let i = 0; i < 8; i += 1){
-    code += chars[Math.floor(Math.random() * chars.length)];
+function markLocalRecord(id){
+  if(!id) return;
+  recentLocalIds.add(id);
+  window.setTimeout(()=>{
+    recentLocalIds.delete(id);
+  }, 15000);
+}
+
+async function ensureNotificationPermission(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission === 'granted') return true;
+  if(Notification.permission === 'denied') return false;
+  try{
+    const result = await Notification.requestPermission();
+    return result === 'granted';
+  }catch(e){
+    return false;
   }
-  return code;
+}
+
+function notifyPeer(title, body){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  try{
+    const notification = new Notification(title, {
+      body: body || '',
+      tag: 'hesab-elakl-' + Date.now(),
+      renotify: true
+    });
+    notification.onclick = ()=>{
+      window.focus();
+      notification.close();
+    };
+  }catch(e){}
+}
+
+function handlePeerInsert(table, row){
+  if(!row || !row.id || recentLocalIds.has(row.id)) return;
+  if(!names) return;
+
+  if(table === 'expenses'){
+    const who = names[row.payer] || 'صاحبك';
+    const desc = row.item_desc || 'بدون وصف';
+    notifyPeer('فاتورة جديدة', `${who} سجل: ${desc} · ${fmt(row.amount)}`);
+    setBanner(`${who} سجل فاتورة جديدة.`, 'info');
+    return;
+  }
+
+  if(table === 'loans'){
+    const lenderName = names[row.lender] || 'طرف';
+    const borrowerName = names[row.borrower] || 'طرف';
+    notifyPeer('سلفة جديدة', `${lenderName} سلف ${borrowerName} · ${fmt(row.amount)}`);
+    setBanner(`سلفة جديدة: ${lenderName} سلف ${borrowerName}.`, 'info');
+  }
 }
 
 function readJson(key, fallback){
@@ -1139,6 +1186,7 @@ async function saveIdentity(key){
   }else{
     localStorage.setItem(LEGACY_IDENTITY_KEY, key);
   }
+  ensureNotificationPermission();
   render();
 }
 
@@ -1301,6 +1349,7 @@ async function subscribeToCurrentTab(){
   if(!currentTab) return;
   const client = await ensureSupabase();
   await stopRealtime();
+  ensureNotificationPermission();
 
   realtimeChannel = client
     .channel(`shared-tab-${currentTab.id}`)
@@ -1322,10 +1371,15 @@ async function subscribeToCurrentTab(){
       schema:'public',
       table:'expenses',
       filter:`tab_id=eq.${currentTab.id}`
-    }, async ()=>{
+    }, async (payload)=>{
       try{
+        if(payload.eventType === 'INSERT'){
+          handlePeerInsert('expenses', payload.new);
+        }
         await refreshCurrentTabData();
-        setBanner('تمت مزامنة آخر التغييرات.', 'success');
+        if(payload.eventType !== 'INSERT' || recentLocalIds.has(payload.new && payload.new.id)){
+          setBanner('تمت مزامنة آخر التغييرات.', 'success');
+        }
       }catch(e){
         setBanner(e.message || 'تعذر تحديث المصروفات.', 'error');
       }
@@ -1335,10 +1389,15 @@ async function subscribeToCurrentTab(){
       schema:'public',
       table:'loans',
       filter:`tab_id=eq.${currentTab.id}`
-    }, async ()=>{
+    }, async (payload)=>{
       try{
+        if(payload.eventType === 'INSERT'){
+          handlePeerInsert('loans', payload.new);
+        }
         await refreshCurrentTabData();
-        setBanner('تمت مزامنة السلف.', 'success');
+        if(payload.eventType !== 'INSERT' || recentLocalIds.has(payload.new && payload.new.id)){
+          setBanner('تمت مزامنة السلف.', 'success');
+        }
       }catch(e){
         setBanner(e.message || 'تعذر تحديث السلف.', 'error');
       }
@@ -1493,6 +1552,7 @@ async function addExpense(){
   const client = await ensureSupabase();
   const { error } = await client.from('expenses').insert(record);
   if(error) throw error;
+  markLocalRecord(record.id);
 
   descInput.value = '';
   amountInput.value = '';
@@ -1601,6 +1661,7 @@ async function addLoan(iAmLender){
   const client = await ensureSupabase();
   const { error } = await client.from('loans').insert(record);
   if(error) throw error;
+  markLocalRecord(record.id);
 
   loanDescInput.value = '';
   loanAmountInput.value = '';
