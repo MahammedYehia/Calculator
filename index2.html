@@ -27,6 +27,7 @@
     --stamp-green-soft:#DFEBE1;
   }
   *{box-sizing:border-box;}
+  html{ -webkit-text-size-adjust:100%; }
   body{
     margin:0;
     background:#DCD6C6;
@@ -35,7 +36,10 @@
     display:flex;
     justify-content:center;
     padding:32px 14px 60px;
+    padding-bottom:max(60px, env(safe-area-inset-bottom));
     min-height:100vh;
+    min-height:100dvh;
+    overflow-x:hidden;
   }
   .receipt{
     width:100%;
@@ -44,6 +48,7 @@
     position:relative;
     padding:34px 26px 30px;
     box-shadow:0 18px 40px -18px rgba(0,0,0,0.35);
+    overflow:hidden;
   }
   .receipt::before, .receipt::after{
     content:"";
@@ -229,12 +234,13 @@
   .item-top{
     display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
   }
-  .item-title{ font-size:14px; font-weight:700; margin:0; }
-  .item-meta{ font-size:11px; color:var(--ink-soft); margin:4px 0 0; }
+  .item-title{ font-size:14px; font-weight:700; margin:0; overflow-wrap:anywhere; }
+  .item-meta{ font-size:11px; color:var(--ink-soft); margin:4px 0 0; overflow-wrap:anywhere; }
   .item-amount{
     font-family:'JetBrains Mono', monospace; font-weight:700; font-size:14px;
-    direction:ltr; white-space:nowrap;
+    direction:ltr; white-space:nowrap; flex-shrink:0;
   }
+  .item-top > div:first-child{ min-width:0; flex:1; }
   .item-amount.in{ color:var(--stamp-green); }
   .item-amount.out{ color:var(--stamp-red); }
   .item-actions{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
@@ -303,6 +309,102 @@
   .toggle-link{
     width:100%; margin-top:8px; border:none; background:none;
     color:var(--ink-soft); text-decoration:underline; font-size:12px; padding:4px 0;
+  }
+
+  @media (max-width: 640px){
+    body{
+      padding:12px 8px 28px;
+      padding-bottom:max(28px, env(safe-area-inset-bottom));
+      align-items:flex-start;
+    }
+    .receipt{
+      max-width:none;
+      padding:22px 14px 20px;
+      box-shadow:0 10px 24px -18px rgba(0,0,0,0.45);
+    }
+    .brand .mark{
+      width:36px; height:36px; margin-bottom:8px;
+    }
+    .brand h1{ font-size:18px; }
+    .brand p{ font-size:11px; line-height:1.6; }
+    .sync-warning{
+      font-size:10.5px; padding:7px 9px; line-height:1.7;
+    }
+    .setup input,
+    .setup select,
+    .field-row input,
+    .field-row select,
+    .join-row input{
+      font-size:16px;
+      min-height:44px;
+    }
+    .btn-main,
+    .btn-secondary,
+    .add-btn,
+    .payer-btn,
+    .join-row button,
+    .item-actions button,
+    .mini-btn{
+      min-height:44px;
+    }
+    .join-row,
+    .field-row,
+    .payer-row,
+    .footer-row,
+    .session-head,
+    .me-row{
+      flex-direction:column;
+      align-items:stretch;
+    }
+    .join-row button,
+    .field-row input,
+    .field-row select{
+      flex:1 1 auto;
+      width:100%;
+    }
+    .join-row button{ flex:1 1 auto; }
+    .session-head{ gap:6px; }
+    .session-head button,
+    .session-actions{ text-align:right; }
+    .session-link-note,
+    .session-code{ word-break:break-word; }
+    .me-row{ gap:8px; }
+    .me-row button{
+      align-self:flex-start;
+      padding:0;
+      min-height:auto;
+    }
+    .balance-card{ padding:14px 12px; }
+    .balance-card .value{
+      font-size:clamp(20px, 8vw, 28px);
+      overflow-wrap:anywhere;
+      word-break:break-word;
+    }
+    .balance-meta{ gap:8px; }
+    .item-top{
+      flex-wrap:wrap;
+      gap:6px 10px;
+    }
+    .item-actions{
+      gap:8px;
+    }
+    .item-actions button{
+      flex:1 1 auto;
+      min-width:0;
+    }
+    .cats{ gap:6px; }
+    .cat-chip{
+      font-size:11px;
+      line-height:1.5;
+    }
+    .dashed{ margin:16px 0; }
+  }
+
+  @media (max-width: 380px){
+    .receipt{ padding:18px 12px 16px; }
+    .brand h1{ font-size:17px; }
+    .balance-card .value{ font-size:22px; }
+    .payer-btn{ font-size:12px; padding:12px 8px; }
   }
 </style>
 </head>
