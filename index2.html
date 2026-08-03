@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مصاريف البيت</title>
+
+<meta name="theme-color" content="#211F19">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مصاريف البيت">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzIxMUYxOSIvPjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTk2IiBmaWxsPSJub25lIiBzdHJva2U9IiNGN0Y0RUIiIHN0cm9rZS13aWR0aD0iMTAiLz48dGV4dCB4PSIyNTYiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwMCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI0Y3RjRFQiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+2KjYsDwvdGV4dD48L3N2Zz4K">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F4EB;
+    --paper-alt:#EFEADA;
+    --ink:#211F19;
+    --ink-soft:#71695A;
+    --line:#D8D0BC;
+    --stamp-red:#AE3A2C;
+    --stamp-red-soft:#F4E1DC;
+    --stamp-green:#3E6B4A;
+    --stamp-green-soft:#DFEBE1;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:#DCD6C6;
+    font-family:'Cairo', sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:32px 14px 60px;
+    min-height:100vh;
+  }
+  .receipt{
+    width:100%;
+    max-width:420px;
+    background:var(--paper);
+    position:relative;
+    padding:34px 26px 30px;
+    box-shadow:0 18px 40px -18px rgba(0,0,0,0.35);
+  }
+  .receipt::before, .receipt::after{
+    content:"";
+    position:absolute;
+    right:0; left:0; height:12px;
+    background:
+      radial-gradient(circle at 10px 6px, transparent 6px, var(--paper) 6.5px) repeat-x;
+    background-size:20px 12px;
+  }
+  .receipt::before{ top:-6px; }
+  .receipt::after{ bottom:-6px; transform:scaleY(-1); }
+
+  .brand{ text-align:center; margin-bottom:4px; cursor:pointer; user-select:none; }
+  .brand .mark{
+    display:inline-flex;
+    width:40px; height:40px;
+    border:1.5px solid var(--ink);
+    border-radius:50%;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:15px;
+    margin-bottom:10px;
+  }
+  .brand h1{ font-size:20px; font-weight:800; margin:0 0 4px; letter-spacing:0.5px; }
+  .brand p{ margin:0; font-size:12px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace; }
+
+  .sync-warning{
+    margin:8px 0 0;
+    font-size:11px;
+    color:var(--stamp-red);
+    background:var(--stamp-red-soft);
+    border:1px solid var(--stamp-red);
+    border-radius:2px;
+    padding:6px 10px;
+  }
+  .sync-warning.success{ color:var(--stamp-green); background:var(--stamp-green-soft); border-color:var(--stamp-green); }
+  .sync-warning.info{ color:var(--ink); background:var(--paper-alt); border-color:var(--line); }
+  .sync-warning.hidden{ display:none; }
+  .hidden{ display:none !important; }
+
+  .dashed{ border:none; border-top:1.5px dashed var(--line); margin:20px 0; }
+
+  .setup label{ display:block; font-size:13px; color:var(--ink-soft); margin:14px 0 6px; }
+  .setup input, .setup select{
+    width:100%;
+    padding:10px 12px;
+    border:1.5px solid var(--ink);
+    background:var(--paper-alt);
+    border-radius:2px;
+    font-family:'Cairo', sans-serif;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .setup input:focus, .setup select:focus, .field-row input:focus, .field-row select:focus{
+    outline:2px solid var(--stamp-green); outline-offset:1px;
+  }
+
+  button{ font-family:'Cairo', sans-serif; cursor:pointer; }
+  .btn-main{
+    width:100%; margin-top:22px; padding:12px;
+    background:var(--ink); color:var(--paper); border:none; border-radius:2px;
+    font-size:15px; font-weight:700;
+  }
+  .btn-main:active{ transform:translateY(1px); }
+  .btn-secondary{
+    width:100%; margin-top:10px; padding:11px;
+    background:var(--paper-alt); color:var(--ink);
+    border:1.5px solid var(--ink); border-radius:2px;
+    font-size:14px; font-weight:700;
+  }
+  .setup-note{ margin:10px 0 0; font-size:12px; color:var(--ink-soft); line-height:1.6; }
+  .or-divider{
+    margin:18px 0 10px; text-align:center; color:var(--ink-soft);
+    font-size:11px; letter-spacing:1px; font-family:'JetBrains Mono', monospace;
+  }
+  .join-row{ display:flex; gap:8px; margin-top:10px; }
+  .join-row input{
+    flex:1; direction:ltr; text-align:left;
+    font-family:'JetBrains Mono', monospace; letter-spacing:1px;
+  }
+  .join-row button{ flex:0 0 112px; margin-top:0; }
+
+  .payer-row{ display:flex; gap:8px; margin-top:10px; }
+  .payer-btn{
+    flex:1; padding:10px 6px; background:var(--paper-alt);
+    border:1.5px solid var(--line); border-radius:2px;
+    font-size:13px; font-weight:600; color:var(--ink-soft); text-align:center;
+  }
+  .payer-btn.active{
+    border-color:var(--stamp-green); background:var(--stamp-green-soft); color:var(--stamp-green);
+  }
+
+  .me-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--stamp-green-soft); border:1.5px solid var(--stamp-green);
+    border-radius:2px; padding:9px 12px; font-size:13px; color:var(--stamp-green); font-weight:600;
+  }
+  .me-row button{
+    background:none; border:none; color:var(--ink-soft); font-size:11px;
+    text-decoration:underline; font-weight:400;
+  }
+  .me-row button:hover{ color:var(--stamp-red); }
+
+  .session-card{
+    margin-bottom:12px; padding:10px 12px;
+    background:var(--paper-alt); border:1.5px solid var(--line); border-radius:2px;
+  }
+  .session-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    font-size:12px; color:var(--ink-soft);
+  }
+  .session-code{
+    display:inline-block; direction:ltr;
+    font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--ink); font-weight:700;
+  }
+  .session-head button, .session-actions button{
+    border:none; background:none; text-decoration:underline; font-size:11px; padding:0;
+  }
+  .session-head button{ color:var(--ink-soft); }
+  .session-head button:hover{ color:var(--stamp-green); }
+  .session-link-note{ margin:8px 0 0; font-size:11px; color:var(--ink-soft); line-height:1.7; }
+  .session-actions{ margin-top:8px; text-align:left; }
+  .session-actions button{ color:var(--stamp-red); }
+
+  .balance-card{
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:2px;
+    padding:16px 14px;
+    text-align:center;
+  }
+  .balance-card .label{ font-size:12px; opacity:0.75; margin:0 0 4px; }
+  .balance-card .value{
+    font-family:'JetBrains Mono', monospace;
+    font-size:28px; font-weight:700; margin:0; direction:ltr;
+  }
+  .balance-card.low{ background:var(--stamp-red); }
+  .balance-meta{
+    display:flex; justify-content:space-between; gap:10px;
+    margin-top:12px; font-size:12px;
+  }
+  .balance-meta > div{
+    flex:1; background:var(--paper-alt); border:1px solid var(--line);
+    border-radius:2px; padding:10px 8px; text-align:center;
+  }
+  .balance-meta .k{ color:var(--ink-soft); margin-bottom:4px; }
+  .balance-meta .v{
+    font-family:'JetBrains Mono', monospace; font-weight:700; direction:ltr;
+  }
+  .balance-meta .in .v{ color:var(--stamp-green); }
+  .balance-meta .out .v{ color:var(--stamp-red); }
+
+  .cats{
+    display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;
+  }
+  .cat-chip{
+    font-size:11px; padding:4px 8px;
+    background:var(--paper-alt); border:1px solid var(--line); border-radius:2px;
+    color:var(--ink-soft);
+  }
+  .cat-chip strong{
+    font-family:'JetBrains Mono', monospace; color:var(--ink); margin-right:4px; direction:ltr; display:inline-block;
+  }
+
+  .section-title{
+    margin:0 0 8px; font-size:12px; color:var(--ink-soft);
+    font-family:'JetBrains Mono', monospace; letter-spacing:0.5px;
+  }
+
+  .due-item, .rec-item, .tx-item{
+    border:1.5px solid var(--line);
+    background:var(--paper-alt);
+    border-radius:2px;
+    padding:10px 12px;
+    margin-bottom:8px;
+  }
+  .due-item{
+    border-color:var(--stamp-red);
+    background:var(--stamp-red-soft);
+  }
+  .item-top{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:8px;
+  }
+  .item-title{ font-size:14px; font-weight:700; margin:0; }
+  .item-meta{ font-size:11px; color:var(--ink-soft); margin:4px 0 0; }
+  .item-amount{
+    font-family:'JetBrains Mono', monospace; font-weight:700; font-size:14px;
+    direction:ltr; white-space:nowrap;
+  }
+  .item-amount.in{ color:var(--stamp-green); }
+  .item-amount.out{ color:var(--stamp-red); }
+  .item-actions{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .item-actions button, .mini-btn{
+    border:1.5px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:2px;
+    padding:6px 10px;
+    font-size:12px;
+    font-weight:700;
+  }
+  .item-actions .danger, .mini-btn.danger{
+    border-color:var(--stamp-red); color:var(--stamp-red); background:var(--stamp-red-soft);
+  }
+  .item-actions .ok, .mini-btn.ok{
+    border-color:var(--stamp-green); color:var(--stamp-green); background:var(--stamp-green-soft);
+  }
+  .tag{
+    display:inline-block;
+    font-size:10px;
+    padding:2px 6px;
+    border-radius:2px;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    margin-left:6px;
+  }
+  .tag.fixed{ border-color:var(--stamp-green); color:var(--stamp-green); background:var(--stamp-green-soft); }
+  .tag.deleted{ border-color:var(--stamp-red); color:var(--stamp-red); text-decoration:line-through; }
+  .tx-item.deleted{ opacity:0.55; }
+  .tx-item.deleted .item-title{ text-decoration:line-through; }
+
+  .field-row{ display:flex; gap:8px; margin-top:10px; }
+  .field-row input, .field-row select{
+    flex:1; padding:10px 12px; border:1.5px solid var(--ink);
+    background:var(--paper-alt); border-radius:2px;
+    font-family:'Cairo', sans-serif; font-size:15px; color:var(--ink);
+  }
+  .field-row input.amount, input.amount{
+    font-family:'JetBrains Mono', monospace; text-align:left; direction:ltr;
+  }
+  .add-btn{
+    width:100%; margin-top:10px; padding:12px;
+    background:var(--stamp-green); color:#fff; border:none; border-radius:2px;
+    font-size:15px; font-weight:700;
+  }
+  .add-btn.alt{ background:var(--ink); }
+  .add-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .role-panel{ margin-top:4px; }
+  .empty{
+    text-align:center; color:var(--ink-soft); font-size:13px;
+    padding:14px 8px; border:1px dashed var(--line); border-radius:2px;
+  }
+
+  .footer-row{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:16px; gap:10px;
+  }
+  .status{ font-size:11px; color:var(--ink-soft); min-height:16px; }
+  .reset-link{
+    border:none; background:none; color:var(--stamp-red);
+    text-decoration:underline; font-size:11px; padding:0;
+  }
+
+  .toggle-link{
+    width:100%; margin-top:8px; border:none; background:none;
+    color:var(--ink-soft); text-decoration:underline; font-size:12px; padding:4px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="receipt">
+  <div class="brand" id="brandHeader">
+    <div class="mark">بـ</div>
+    <h1>مصاريف البيت</h1>
+    <p id="subline">محفظة مشتركة للبيت</p>
+    <p id="syncWarning" class="sync-warning hidden"></p>
+  </div>
+
+  <hr class="dashed">
+
+  <div id="setup" class="setup hidden">
+    <label>اسم الزوج</label>
+    <input id="nameHusband" placeholder="مثلاً: محمد" maxlength="20">
+    <label>اسم الزوجة</label>
+    <input id="nameWife" placeholder="مثلاً: سارة" maxlength="20">
+    <button class="btn-main" id="startBtn" type="button">أنشئ محفظة البيت</button>
+    <p class="setup-note">هيتعمل كود جلسة تشاركه مع بعض، والاتنين يشوفوا نفس الرصيد من أي جهاز.</p>
+
+    <div class="or-divider">OR JOIN</div>
+    <label>عندك كود الجلسة؟</label>
+    <div class="join-row">
+      <input id="joinCode" placeholder="AB12CD34" maxlength="12">
+      <button class="btn-secondary" id="joinBtn" type="button">انضم</button>
+    </div>
+  </div>
+
+  <div id="whoami" class="setup hidden">
+    <label>إنت مين؟</label>
+    <div class="payer-row" id="whoamiRow"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div id="sessionCard" class="session-card hidden">
+      <div class="session-head">
+        <span>رمز الجلسة: <span id="sessionCode" class="session-code">-</span></span>
+        <button type="button" id="copyLinkBtn">انسخ الرابط</button>
+      </div>
+      <p class="session-link-note">ابعت الرابط ده للطرف التاني عشان يفتح نفس المحفظة.</p>
+      <div class="session-actions">
+        <button type="button" id="leaveSessionBtn">افصل هذا الجهاز عن الجلسة</button>
+      </div>
+    </div>
+
+    <div class="me-row" id="meRow"></div>
+
+    <div id="balanceBox"></div>
+
+    <hr class="dashed">
+
+    <div id="dueSection"></div>
+    <div id="rolePanel" class="role-panel"></div>
+
+    <hr class="dashed">
+
+    <p class="section-title">الثابت</p>
+    <div id="recurringList"></div>
+    <button type="button" class="toggle-link" id="recurringFormToggle">+ أضف مصروف ثابت</button>
+    <div id="recurringForm" class="hidden">
+      <div class="field-row">
+        <input id="recTitle" placeholder="مثلاً: حضانة" maxlength="40">
+        <input id="recAmount" class="amount" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="field-row">
+        <select id="recCategory"></select>
+        <select id="recInterval">
+          <option value="1">كل شهر</option>
+          <option value="2">كل شهرين</option>
+          <option value="3">كل 3 شهور</option>
+          <option value="6">كل 6 شهور</option>
+          <option value="12">كل سنة</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <input id="recNextDue" type="date">
+      </div>
+      <button type="button" class="add-btn alt" id="addRecurringBtn">احفظ الثابت</button>
+    </div>
+
+    <hr class="dashed">
+
+    <p class="section-title">السجل</p>
+    <div id="ledger"></div>
+
+    <div class="footer-row">
+      <span class="status" id="statusMsg">&nbsp;</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const CATEGORIES = ['دروس', 'حضانة', 'أكل', 'كتب', 'مصروف', 'مواصلات', 'فواتير', 'أخرى'];
+
+const setupEl = document.getElementById('setup');
+const whoamiEl = document.getElementById('whoami');
+const whoamiRow = document.getElementById('whoamiRow');
+const appEl = document.getElementById('app');
+const nameHusbandInput = document.getElementById('nameHusband');
+const nameWifeInput = document.getElementById('nameWife');
+const startBtn = document.getElementById('startBtn');
+const joinCodeInput = document.getElementById('joinCode');
+const joinBtn = document.getElementById('joinBtn');
+const brandHeader = document.getElementById('brandHeader');
+const subline = document.getElementById('subline');
+const syncWarning = document.getElementById('syncWarning');
+const sessionCard = document.getElementById('sessionCard');
+const sessionCode = document.getElementById('sessionCode');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
+const leaveSessionBtn = document.getElementById('leaveSessionBtn');
+const meRow = document.getElementById('meRow');
+const balanceBox = document.getElementById('balanceBox');
+const dueSection = document.getElementById('dueSection');
+const rolePanel = document.getElementById('rolePanel');
+const recurringList = document.getElementById('recurringList');
+const recurringFormToggle = document.getElementById('recurringFormToggle');
+const recurringForm = document.getElementById('recurringForm');
+const recTitle = document.getElementById('recTitle');
+const recAmount = document.getElementById('recAmount');
+const recCategory = document.getElementById('recCategory');
+const recInterval = document.getElementById('recInterval');
+const recNextDue = document.getElementById('recNextDue');
+const addRecurringBtn = document.getElementById('addRecurringBtn');
+const ledgerEl = document.getElementById('ledger');
+const statusMsg = document.getElementById('statusMsg');
+
+const SUPABASE_URL = window.SUPABASE_URL || 'https://qmidagpgbgxcccohzesi.supabase.co';
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_yvSam6PenOMjnJkeT7zmlA_w0V65RN0';
+const ACTIVE_TAB_ID_KEY = 'bayt_tab_id';
+const ACTIVE_TAB_CODE_KEY = 'bayt_tab_code';
+
+let supabaseClient = null;
+let realtimeChannel = null;
+let currentTab = null;
+let names = null;
+let myIdentity = null; // 'husband' | 'wife'
+let transfers = [];
+let spends = [];
+let recurring = [];
+let brandPanelExpanded = false;
+let bannerTone = 'info';
+let bannerMessage = '';
+let recentLocalIds = new Set();
+let busy = false;
+
+CATEGORIES.forEach(c=>{
+  const opt = document.createElement('option');
+  opt.value = c;
+  opt.textContent = c;
+  recCategory.appendChild(opt);
+});
+recNextDue.value = todayISO();
+
+function todayISO(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function hasSupabaseConfig(){
+  return SUPABASE_URL.startsWith('https://') &&
+    !SUPABASE_URL.includes('YOUR-PROJECT') &&
+    !!SUPABASE_ANON_KEY &&
+    !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
+}
+
+function fmt(n){
+  return Math.round(Number(n) * 100) / 100;
+}
+
+function money(n){
+  return fmt(n).toLocaleString('en-US', { minimumFractionDigits:0, maximumFractionDigits:2 });
+}
+
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function makeJoinCode(){
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  for(const b of bytes) out += alphabet[b % alphabet.length];
+  return out;
+}
+
+function normalizeJoinCode(value){
+  return (value || '').trim().replace(/\s+/g, '').toUpperCase();
+}
+
+function setBanner(message, tone){
+  bannerMessage = message || '';
+  bannerTone = tone || 'info';
+  syncWarning.textContent = bannerMessage;
+  updateHeaderDetailsVisibility();
+}
+
+function setStatus(message, timeout){
+  statusMsg.textContent = message || '\u00a0';
+  if(message && timeout){
+    window.clearTimeout(setStatus._timer);
+    setStatus._timer = window.setTimeout(()=>{ statusMsg.textContent = '\u00a0'; }, timeout);
+  }
+}
+
+function updateHeaderDetailsVisibility(){
+  const canToggle = !!currentTab && !!myIdentity;
+  const showPanel = canToggle && brandPanelExpanded;
+  const showBanner = !!bannerMessage && (showPanel || !canToggle || (bannerTone !== 'success' && bannerTone !== 'info'));
+  syncWarning.className = 'sync-warning' + (showBanner ? ' ' + bannerTone : ' hidden');
+  sessionCard.classList.toggle('hidden', !showPanel);
+  meRow.classList.toggle('hidden', !showPanel);
+}
+
+function markLocalRecord(id){
+  if(!id) return;
+  recentLocalIds.add(id);
+  window.setTimeout(()=> recentLocalIds.delete(id), 15000);
+}
+
+function getIdentityStorageKey(tabId){
+  return `bayt_identity:${tabId}`;
+}
+
+function rememberActiveTab(tab){
+  localStorage.setItem(ACTIVE_TAB_ID_KEY, tab.id);
+  localStorage.setItem(ACTIVE_TAB_CODE_KEY, tab.joinCode);
+}
+
+function forgetActiveTab(){
+  localStorage.removeItem(ACTIVE_TAB_ID_KEY);
+  localStorage.removeItem(ACTIVE_TAB_CODE_KEY);
+}
+
+function buildShareLink(joinCode){
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', joinCode);
+  return url.toString();
+}
+
+function updateUrlForTab(joinCode){
+  const url = new URL(window.location.href);
+  if(joinCode) url.searchParams.set('tab', joinCode);
+  else url.searchParams.delete('tab');
+  window.history.replaceState({}, '', url.toString());
+}
+
+async function ensureSupabase(){
+  if(supabaseClient) return supabaseClient;
+  if(!hasSupabaseConfig()) throw new Error('أضف بيانات Supabase أولًا.');
+  if(!window.supabase || typeof window.supabase.createClient !== 'function'){
+    throw new Error('مكتبة Supabase لم تُحمّل بنجاح.');
+  }
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return supabaseClient;
+}
+
+function normalizeTab(row){
+  return {
+    id: row.id,
+    joinCode: row.join_code,
+    husband: row.name_husband,
+    wife: row.name_wife
+  };
+}
+
+function normalizeTransfer(row){
+  return {
+    id: row.id,
+    amount: Number(row.amount),
+    note: row.note || '',
+    ts: Number(row.ts),
+    deletedAt: row.deleted_at || null
+  };
+}
+
+function normalizeSpend(row){
+  return {
+    id: row.id,
+    category: row.category || 'أخرى',
+    desc: row.item_desc || '',
+    amount: Number(row.amount),
+    ts: Number(row.ts),
+    recurringId: row.recurring_id || null,
+    deletedAt: row.deleted_at || null
+  };
+}
+
+function normalizeRecurring(row){
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    amount: Number(row.amount),
+    intervalMonths: Number(row.interval_months),
+    nextDue: row.next_due,
+    active: row.active !== false,
+    deletedAt: row.deleted_at || null
+  };
+}
+
+function addMonths(isoDate, months){
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDate();
+  dt.setUTCDate(1);
+  dt.setUTCMonth(dt.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate();
+  dt.setUTCDate(Math.min(day, lastDay));
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth()+1).padStart(2,'0');
+  const dd = String(dt.getUTCDate()).padStart(2,'0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+function intervalLabel(months){
+  if(months === 1) return 'كل شهر';
+  if(months === 2) return 'كل شهرين';
+  if(months === 3) return 'كل 3 شهور';
+  if(months === 6) return 'كل 6 شهور';
+  if(months === 12) return 'كل سنة';
+  return `كل ${months} شهر`;
+}
+
+function formatTs(ts){
+  try{
+    return new Date(ts).toLocaleString('ar-EG', {
+      year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'
+    });
+  }catch(e){
+    return '';
+  }
+}
+
+function activeTransfers(){ return transfers.filter(t => !t.deletedAt); }
+function activeSpends(){ return spends.filter(s => !s.deletedAt); }
+function activeRecurring(){ return recurring.filter(r => !r.deletedAt && r.active); }
+
+function dueRecurring(){
+  const today = todayISO();
+  return activeRecurring().filter(r => r.nextDue <= today)
+    .sort((a,b)=> a.nextDue.localeCompare(b.nextDue));
+}
+
+function totals(){
+  const inSum = activeTransfers().reduce((s,t)=> s + t.amount, 0);
+  const outSum = activeSpends().reduce((s,t)=> s + t.amount, 0);
+  return { inSum, outSum, balance: inSum - outSum };
+}
+
+function categoryTotals(){
+  const map = {};
+  activeSpends().forEach(s=>{
+    map[s.category] = (map[s.category] || 0) + s.amount;
+  });
+  return Object.entries(map).sort((a,b)=> b[1]-a[1]);
+}
+
+async function fetchTabByCode(code){
+  const client = await ensureSupabase();
+  const { data, error } = await client
+    .from('household_tabs')
+    .select('id, join_code, name_husband, name_wife')
+    .eq('join_code', code)
+    .maybeSingle();
+  if(error) throw error;
+  return data ? normalizeTab(data) : null;
+}
+
+async function fetchTabById(id){
+  const client = await ensureSupabase();
+  const { data, error } = await client
+    .from('household_tabs')
+    .select('id, join_code, name_husband, name_wife')
+    .eq('id', id)
+    .maybeSingle();
+  if(error) throw error;
+  return data ? normalizeTab(data) : null;
+}
+
+async function loadAllData(tabId){
+  const client = await ensureSupabase();
+  const [tRes, sRes, rRes] = await Promise.all([
+    client.from('household_transfers').select('*').eq('tab_id', tabId).order('ts', { ascending:false }),
+    client.from('household_spends').select('*').eq('tab_id', tabId).order('ts', { ascending:false }),
+    client.from('household_recurring').select('*').eq('tab_id', tabId).order('next_due', { ascending:true })
+  ]);
+  if(tRes.error) throw tRes.error;
+  if(sRes.error) throw sRes.error;
+  if(rRes.error) throw rRes.error;
+  transfers = (tRes.data || []).map(normalizeTransfer);
+  spends = (sRes.data || []).map(normalizeSpend);
+  recurring = (rRes.data || []).map(normalizeRecurring);
+}
+
+async function subscribeRealtime(tabId){
+  const client = await ensureSupabase();
+  if(realtimeChannel){
+    await client.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  realtimeChannel = client.channel('bayt-' + tabId)
+    .on('postgres_changes', { event:'*', schema:'public', table:'household_transfers', filter:`tab_id=eq.${tabId}` }, async (payload)=>{
+      if(payload.eventType === 'INSERT' && payload.new && !recentLocalIds.has(payload.new.id)){
+        setBanner('تحويل جديد اتسجّل.', 'info');
+      }
+      await refreshQuiet();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'household_spends', filter:`tab_id=eq.${tabId}` }, async (payload)=>{
+      if(payload.eventType === 'INSERT' && payload.new && !recentLocalIds.has(payload.new.id)){
+        setBanner('مصروف جديد اتسجّل.', 'info');
+      }
+      await refreshQuiet();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'household_recurring', filter:`tab_id=eq.${tabId}` }, async ()=>{
+      await refreshQuiet();
+    })
+    .subscribe((status)=>{
+      if(status === 'SUBSCRIBED') setBanner('متزامن مع السحابة.', 'success');
+      else if(status === 'CHANNEL_ERROR') setBanner('مشكلة في الاتصال اللحظي.', 'warning');
+    });
+}
+
+async function refreshQuiet(){
+  if(!currentTab) return;
+  try{
+    await loadAllData(currentTab.id);
+    render();
+  }catch(e){
+    console.error(e);
+  }
+}
+
+async function enterTab(tab){
+  currentTab = tab;
+  names = { husband: tab.husband, wife: tab.wife };
+  rememberActiveTab(tab);
+  updateUrlForTab(tab.joinCode);
+  myIdentity = localStorage.getItem(getIdentityStorageKey(tab.id));
+  await loadAllData(tab.id);
+  await subscribeRealtime(tab.id);
+  setBanner('متزامن مع السحابة.', 'success');
+  render();
+}
+
+async function createSession(){
+  const husband = (nameHusbandInput.value || '').trim();
+  const wife = (nameWifeInput.value || '').trim();
+  if(!husband || !wife){
+    setBanner('اكتب الاسمين الأول.', 'error');
+    return;
+  }
+  try{
+    busy = true;
+    startBtn.disabled = true;
+    const client = await ensureSupabase();
+    const code = makeJoinCode();
+    const { data, error } = await client.from('household_tabs').insert({
+      join_code: code,
+      name_husband: husband,
+      name_wife: wife
+    }).select('id, join_code, name_husband, name_wife').single();
+    if(error) throw error;
+    await enterTab(normalizeTab(data));
+  }catch(e){
+    console.error(e);
+    setBanner('ما قدرتش أنشئ الجلسة: ' + (e.message || e), 'error');
+  }finally{
+    busy = false;
+    startBtn.disabled = false;
+  }
+}
+
+async function joinSession(rawCode){
+  const code = normalizeJoinCode(rawCode);
+  if(!code){
+    setBanner('اكتب كود الجلسة.', 'error');
+    return;
+  }
+  try{
+    busy = true;
+    joinBtn.disabled = true;
+    const tab = await fetchTabByCode(code);
+    if(!tab){
+      setBanner('الكود ده مش موجود.', 'error');
+      return;
+    }
+    await enterTab(tab);
+  }catch(e){
+    console.error(e);
+    setBanner('فشل الانضمام: ' + (e.message || e), 'error');
+  }finally{
+    busy = false;
+    joinBtn.disabled = false;
+  }
+}
+
+async function leaveSession(){
+  if(realtimeChannel && supabaseClient){
+    await supabaseClient.removeChannel(realtimeChannel);
+    realtimeChannel = null;
+  }
+  if(currentTab) localStorage.removeItem(getIdentityStorageKey(currentTab.id));
+  forgetActiveTab();
+  updateUrlForTab(null);
+  currentTab = null;
+  names = null;
+  myIdentity = null;
+  transfers = [];
+  spends = [];
+  recurring = [];
+  brandPanelExpanded = false;
+  setBanner('', 'info');
+  render();
+}
+
+async function saveIdentity(key){
+  myIdentity = key;
+  if(currentTab) localStorage.setItem(getIdentityStorageKey(currentTab.id), key);
+  render();
+}
+
+async function addTransfer(){
+  const amount = Number(document.getElementById('transferAmount')?.value);
+  const note = (document.getElementById('transferNote')?.value || '').trim();
+  if(!(amount > 0)){
+    setStatus('اكتب مبلغ صحيح', 2500);
+    return;
+  }
+  const id = uid();
+  const row = {
+    id,
+    tab_id: currentTab.id,
+    amount: fmt(amount),
+    note,
+    ts: Date.now()
+  };
+  try{
+    markLocalRecord(id);
+    const client = await ensureSupabase();
+    const { error } = await client.from('household_transfers').insert(row);
+    if(error) throw error;
+    transfers.unshift(normalizeTransfer(row));
+    document.getElementById('transferAmount').value = '';
+    document.getElementById('transferNote').value = '';
+    setStatus('اتسجّل التحويل', 2000);
+    render();
+  }catch(e){
+    console.error(e);
+    setStatus('فشل تسجيل التحويل', 3000);
+  }
+}
+
+async function addSpend(){
+  const amount = Number(document.getElementById('spendAmount')?.value);
+  const desc = (document.getElementById('spendDesc')?.value || '').trim();
+  const category = document.getElementById('spendCategory')?.value || 'أخرى';
+  if(!(amount > 0)){
+    setStatus('اكتب مبلغ صحيح', 2500);
+    return;
+  }
+  const id = uid();
+  const row = {
+    id,
+    tab_id: currentTab.id,
+    category,
+    item_desc: desc,
+    amount: fmt(amount),
+    ts: Date.now(),
+    recurring_id: null
+  };
+  try{
+    markLocalRecord(id);
+    const client = await ensureSupabase();
+    const { error } = await client.from('household_spends').insert(row);
+    if(error) throw error;
+    spends.unshift(normalizeSpend(row));
+    document.getElementById('spendAmount').value = '';
+    document.getElementById('spendDesc').value = '';
+    setStatus('اتسجّل المصروف', 2000);
+    render();
+  }catch(e){
+    console.error(e);
+    setStatus('فشل تسجيل المصروف', 3000);
+  }
+}
+
+async function softDeleteTransfer(id){
+  try{
+    const client = await ensureSupabase();
+    const deletedAt = new Date().toISOString();
+    const { error } = await client.from('household_transfers').update({ deleted_at: deletedAt }).eq('id', id);
+    if(error) throw error;
+    const item = transfers.find(t => t.id === id);
+    if(item) item.deletedAt = deletedAt;
+    render();
+  }catch(e){
+    setStatus('فشل الحذف', 2500);
+  }
+}
+
+async function softDeleteSpend(id){
+  try{
+    const client = await ensureSupabase();
+    const deletedAt = new Date().toISOString();
+    const { error } = await client.from('household_spends').update({ deleted_at: deletedAt }).eq('id', id);
+    if(error) throw error;
+    const item = spends.find(t => t.id === id);
+    if(item) item.deletedAt = deletedAt;
+    render();
+  }catch(e){
+    setStatus('فشل الحذف', 2500);
+  }
+}
+
+async function addRecurring(){
+  const title = (recTitle.value || '').trim();
+  const amount = Number(recAmount.value);
+  const category = recCategory.value;
+  const intervalMonths = Number(recInterval.value);
+  const nextDue = recNextDue.value || todayISO();
+  if(!title || !(amount > 0)){
+    setStatus('اكتب اسم ومبلغ للثابت', 2500);
+    return;
+  }
+  const id = uid();
+  const row = {
+    id,
+    tab_id: currentTab.id,
+    title,
+    category,
+    amount: fmt(amount),
+    interval_months: intervalMonths,
+    next_due: nextDue,
+    active: true
+  };
+  try{
+    markLocalRecord(id);
+    const client = await ensureSupabase();
+    const { error } = await client.from('household_recurring').insert(row);
+    if(error) throw error;
+    recurring.push(normalizeRecurring(row));
+    recTitle.value = '';
+    recAmount.value = '';
+    recNextDue.value = todayISO();
+    recurringForm.classList.add('hidden');
+    setStatus('اتحفظ المصروف الثابت', 2000);
+    render();
+  }catch(e){
+    console.error(e);
+    setStatus('فشل حفظ الثابت', 3000);
+  }
+}
+
+async function postRecurring(recId){
+  const rec = recurring.find(r => r.id === recId && !r.deletedAt);
+  if(!rec) return;
+  const spendId = uid();
+  const spendRow = {
+    id: spendId,
+    tab_id: currentTab.id,
+    category: rec.category,
+    item_desc: rec.title,
+    amount: fmt(rec.amount),
+    ts: Date.now(),
+    recurring_id: rec.id
+  };
+  const nextDue = addMonths(rec.nextDue, rec.intervalMonths);
+  try{
+    markLocalRecord(spendId);
+    const client = await ensureSupabase();
+    const { error: e1 } = await client.from('household_spends').insert(spendRow);
+    if(e1) throw e1;
+    const { error: e2 } = await client.from('household_recurring')
+      .update({ next_due: nextDue })
+      .eq('id', rec.id);
+    if(e2) throw e2;
+    spends.unshift(normalizeSpend(spendRow));
+    rec.nextDue = nextDue;
+    setStatus('اتسجّل المستحق', 2000);
+    render();
+  }catch(e){
+    console.error(e);
+    setStatus('فشل تسجيل المستحق', 3000);
+  }
+}
+
+async function deactivateRecurring(recId){
+  try{
+    const client = await ensureSupabase();
+    const deletedAt = new Date().toISOString();
+    const { error } = await client.from('household_recurring')
+      .update({ active: false, deleted_at: deletedAt })
+      .eq('id', recId);
+    if(error) throw error;
+    const item = recurring.find(r => r.id === recId);
+    if(item){
+      item.active = false;
+      item.deletedAt = deletedAt;
+    }
+    render();
+  }catch(e){
+    setStatus('فشل إيقاف الثابت', 2500);
+  }
+}
+
+function renderBalance(){
+  const { inSum, outSum, balance } = totals();
+  const cats = categoryTotals();
+  balanceBox.innerHTML = `
+    <div class="balance-card ${balance < 0 ? 'low' : ''}">
+      <p class="label">الرصيد المتبقي</p>
+      <p class="value">${money(balance)}</p>
+    </div>
+    <div class="balance-meta">
+      <div class="in"><div class="k">تحويلات</div><div class="v">${money(inSum)}</div></div>
+      <div class="out"><div class="k">مصاريف</div><div class="v">${money(outSum)}</div></div>
+    </div>
+    ${cats.length ? `<div class="cats">${cats.map(([k,v])=>`<span class="cat-chip"><strong>${money(v)}</strong>${k}</span>`).join('')}</div>` : ''}
+  `;
+}
+
+function renderDue(){
+  const due = dueRecurring();
+  if(!due.length){
+    dueSection.innerHTML = '';
+    return;
+  }
+  dueSection.innerHTML = `
+    <p class="section-title">مستحقات</p>
+    ${due.map(r => `
+      <div class="due-item" data-id="${r.id}">
+        <div class="item-top">
+          <div>
+            <p class="item-title">${escapeHtml(r.title)} <span class="tag">${escapeHtml(r.category)}</span></p>
+            <p class="item-meta">استحق ${escapeHtml(r.nextDue)} · ${intervalLabel(r.intervalMonths)}</p>
+          </div>
+          <div class="item-amount out">${money(r.amount)}</div>
+        </div>
+        <div class="item-actions">
+          <button type="button" class="ok" data-action="post-recurring">سجّل</button>
+        </div>
+      </div>
+    `).join('')}
+    <hr class="dashed">
+  `;
+}
+
+function renderRolePanel(){
+  if(myIdentity === 'husband'){
+    rolePanel.innerHTML = `
+      <p class="section-title">حوّلت فلوس</p>
+      <div class="field-row">
+        <input id="transferNote" placeholder="ملاحظة (اختياري)" maxlength="40">
+        <input id="transferAmount" class="amount" placeholder="0" inputmode="decimal">
+      </div>
+      <button type="button" class="add-btn" id="addTransferBtn">سجّل التحويل</button>
+    `;
+    document.getElementById('addTransferBtn').onclick = addTransfer;
+    return;
+  }
+
+  if(myIdentity === 'wife'){
+    const opts = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+    rolePanel.innerHTML = `
+      <p class="section-title">صرفت</p>
+      <div class="field-row">
+        <input id="spendDesc" placeholder="اشتريت / دفعت إيه؟" maxlength="40">
+        <input id="spendAmount" class="amount" placeholder="0" inputmode="decimal">
+      </div>
+      <div class="field-row">
+        <select id="spendCategory">${opts}</select>
+      </div>
+      <button type="button" class="add-btn" id="addSpendBtn">سجّل المصروف</button>
+    `;
+    document.getElementById('addSpendBtn').onclick = addSpend;
+    return;
+  }
+
+  rolePanel.innerHTML = '';
+}
+
+function renderRecurring(){
+  const list = activeRecurring().slice().sort((a,b)=> a.nextDue.localeCompare(b.nextDue));
+  if(!list.length){
+    recurringList.innerHTML = `<div class="empty">مفيش مصاريف ثابتة لسه</div>`;
+    return;
+  }
+  const today = todayISO();
+  recurringList.innerHTML = list.map(r => `
+    <div class="rec-item" data-id="${r.id}">
+      <div class="item-top">
+        <div>
+          <p class="item-title">${escapeHtml(r.title)} <span class="tag">${escapeHtml(r.category)}</span></p>
+          <p class="item-meta">${intervalLabel(r.intervalMonths)} · القادم ${escapeHtml(r.nextDue)}${r.nextDue <= today ? ' · مستحق' : ''}</p>
+        </div>
+        <div class="item-amount out">${money(r.amount)}</div>
+      </div>
+      <div class="item-actions">
+        ${r.nextDue <= today ? `<button type="button" class="ok" data-action="post-recurring">سجّل</button>` : ''}
+        <button type="button" class="danger" data-action="stop-recurring">إيقاف</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderLedger(){
+  const items = [
+    ...activeTransfers().map(t => ({ kind:'transfer', ...t })),
+    ...activeSpends().map(s => ({ kind:'spend', ...s })),
+    ...transfers.filter(t => t.deletedAt).map(t => ({ kind:'transfer', ...t })),
+    ...spends.filter(s => s.deletedAt).map(s => ({ kind:'spend', ...s }))
+  ].sort((a,b)=> b.ts - a.ts).slice(0, 80);
+
+  if(!items.length){
+    ledgerEl.innerHTML = `<div class="empty">لسه مفيش حركة</div>`;
+    return;
+  }
+
+  ledgerEl.innerHTML = items.map(item => {
+    if(item.kind === 'transfer'){
+      return `
+        <div class="tx-item ${item.deletedAt ? 'deleted' : ''}" data-kind="transfer" data-id="${item.id}">
+          <div class="item-top">
+            <div>
+              <p class="item-title">تحويل ${item.deletedAt ? '<span class="tag deleted">محذوف</span>' : ''}</p>
+              <p class="item-meta">${escapeHtml(item.note || 'بدون ملاحظة')} · ${formatTs(item.ts)}</p>
+            </div>
+            <div class="item-amount in">+${money(item.amount)}</div>
+          </div>
+          ${!item.deletedAt && myIdentity === 'husband' ? `<div class="item-actions"><button type="button" class="danger" data-action="del-transfer">حذف</button></div>` : ''}
+        </div>
+      `;
+    }
+    return `
+      <div class="tx-item ${item.deletedAt ? 'deleted' : ''}" data-kind="spend" data-id="${item.id}">
+        <div class="item-top">
+          <div>
+            <p class="item-title">${escapeHtml(item.desc || item.category)}
+              <span class="tag">${escapeHtml(item.category)}</span>
+              ${item.recurringId ? '<span class="tag fixed">ثابت</span>' : ''}
+              ${item.deletedAt ? '<span class="tag deleted">محذوف</span>' : ''}
+            </p>
+            <p class="item-meta">${formatTs(item.ts)}</p>
+          </div>
+          <div class="item-amount out">-${money(item.amount)}</div>
+        </div>
+        ${!item.deletedAt && myIdentity === 'wife' ? `<div class="item-actions"><button type="button" class="danger" data-action="del-spend">حذف</button></div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(str){
+  return String(str || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function render(){
+  if(!currentTab){
+    setupEl.classList.remove('hidden');
+    whoamiEl.classList.add('hidden');
+    appEl.classList.add('hidden');
+    subline.textContent = 'محفظة مشتركة للبيت';
+    updateHeaderDetailsVisibility();
+    return;
+  }
+
+  setupEl.classList.add('hidden');
+  names = { husband: currentTab.husband, wife: currentTab.wife };
+  subline.textContent = `${names.husband} × ${names.wife}`;
+  sessionCode.textContent = currentTab.joinCode;
+
+  if(!myIdentity){
+    whoamiEl.classList.remove('hidden');
+    appEl.classList.add('hidden');
+    whoamiRow.innerHTML = `
+      <button type="button" class="payer-btn" data-role="husband">${escapeHtml(names.husband)} (زوج)</button>
+      <button type="button" class="payer-btn" data-role="wife">${escapeHtml(names.wife)} (زوجة)</button>
+    `;
+    updateHeaderDetailsVisibility();
+    return;
+  }
+
+  whoamiEl.classList.add('hidden');
+  appEl.classList.remove('hidden');
+  meRow.innerHTML = `
+    <span>أنت: ${escapeHtml(names[myIdentity])} · ${myIdentity === 'husband' ? 'تحويلة' : 'مصاريف'}</span>
+    <button type="button" id="switchIdentityBtn">تغيير</button>
+  `;
+  document.getElementById('switchIdentityBtn').onclick = ()=>{
+    localStorage.removeItem(getIdentityStorageKey(currentTab.id));
+    myIdentity = null;
+    render();
+  };
+
+  renderBalance();
+  renderDue();
+  renderRolePanel();
+  renderRecurring();
+  renderLedger();
+  updateHeaderDetailsVisibility();
+}
+
+// Events
+startBtn.addEventListener('click', createSession);
+joinBtn.addEventListener('click', ()=> joinSession(joinCodeInput.value));
+joinCodeInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') joinSession(joinCodeInput.value);
+});
+
+whoamiRow.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-role]');
+  if(!btn) return;
+  saveIdentity(btn.dataset.role);
+});
+
+brandHeader.addEventListener('click', ()=>{
+  if(!currentTab || !myIdentity) return;
+  brandPanelExpanded = !brandPanelExpanded;
+  updateHeaderDetailsVisibility();
+});
+
+copyLinkBtn.addEventListener('click', async ()=>{
+  if(!currentTab) return;
+  const link = buildShareLink(currentTab.joinCode);
+  try{
+    await navigator.clipboard.writeText(link);
+    setStatus('اتنسخ الرابط', 2000);
+  }catch(e){
+    prompt('انسخ الرابط:', link);
+  }
+});
+
+leaveSessionBtn.addEventListener('click', leaveSession);
+
+recurringFormToggle.addEventListener('click', ()=>{
+  recurringForm.classList.toggle('hidden');
+});
+addRecurringBtn.addEventListener('click', addRecurring);
+
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-action]');
+  if(!btn) return;
+  const wrap = btn.closest('[data-id]');
+  if(!wrap) return;
+  const id = wrap.dataset.id;
+  const action = btn.dataset.action;
+  if(action === 'post-recurring') postRecurring(id);
+  if(action === 'stop-recurring'){
+    if(confirm('إيقاف المصروف الثابت ده؟')) deactivateRecurring(id);
+  }
+  if(action === 'del-transfer'){
+    if(confirm('حذف التحويل؟')) softDeleteTransfer(id);
+  }
+  if(action === 'del-spend'){
+    if(confirm('حذف المصروف؟')) softDeleteSpend(id);
+  }
+});
+
+async function boot(){
+  try{
+    if(!hasSupabaseConfig()){
+      setBanner('بيانات Supabase ناقصة.', 'error');
+      render();
+      return;
+    }
+    await ensureSupabase();
+    const params = new URLSearchParams(window.location.search);
+    const urlCode = normalizeJoinCode(params.get('tab'));
+    const storedId = localStorage.getItem(ACTIVE_TAB_ID_KEY);
+    const storedCode = localStorage.getItem(ACTIVE_TAB_CODE_KEY);
+
+    if(urlCode){
+      await joinSession(urlCode);
+      return;
+    }
+    if(storedId){
+      const tab = await fetchTabById(storedId);
+      if(tab){
+        await enterTab(tab);
+        return;
+      }
+    }
+    if(storedCode){
+      await joinSession(storedCode);
+      return;
+    }
+    render();
+  }catch(e){
+    console.error(e);
+    setBanner('تعذر الاتصال بـ Supabase. تأكد إنك شغّلت schema.sql', 'error');
+    render();
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
