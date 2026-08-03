@@ -6,11 +6,14 @@
 <title>مصاريف البيت</title>
 
 <meta name="theme-color" content="#211F19">
+<meta name="description" content="محفظة مشتركة لمصاريف البيت">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="مصاريف البيت">
-<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzIxMUYxOSIvPjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iMTk2IiBmaWxsPSJub25lIiBzdHJva2U9IiNGN0Y0RUIiIHN0cm9rZS13aWR0aD0iMTAiLz48dGV4dCB4PSIyNTYiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjIwMCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI0Y3RjRFQiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+2KjYsDwvdGV4dD48L3N2Zz4K">
+<link rel="manifest" href="./manifest-bayt.webmanifest">
+<link rel="icon" href="./icon-bayt.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-bayt-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -311,6 +314,39 @@
     color:var(--ink-soft); text-decoration:underline; font-size:12px; padding:4px 0;
   }
 
+  .install-banner{
+    margin-top:14px;
+    padding:12px;
+    background:var(--paper-alt);
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+  }
+  .install-banner .install-text{
+    margin:0 0 10px;
+    font-size:13px;
+    color:var(--ink);
+    line-height:1.7;
+  }
+  .install-banner .install-actions{
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .install-banner .install-actions button{
+    flex:1;
+    min-height:42px;
+    border-radius:2px;
+    font-size:13px;
+    font-weight:700;
+    padding:10px 12px;
+  }
+  .install-banner .install-go{
+    background:var(--ink); color:var(--paper); border:none;
+  }
+  .install-banner .install-later{
+    background:var(--paper); color:var(--ink);
+    border:1.5px solid var(--line);
+  }
+  .install-banner.ios .install-go{ display:none; }
+
   @media (max-width: 640px){
     body{
       padding:12px 8px 28px;
@@ -497,6 +533,14 @@
       <span class="status" id="statusMsg">&nbsp;</span>
     </div>
   </div>
+
+  <div id="installBanner" class="install-banner hidden" role="region" aria-label="تثبيت التطبيق">
+    <p class="install-text" id="installText">ثبّت التطبيق على جهازك للوصول السريع.</p>
+    <div class="install-actions">
+      <button type="button" class="install-go" id="installBtn">تثبيت</button>
+      <button type="button" class="install-later" id="installDismiss">لاحقاً</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -534,11 +578,16 @@ const recNextDue = document.getElementById('recNextDue');
 const addRecurringBtn = document.getElementById('addRecurringBtn');
 const ledgerEl = document.getElementById('ledger');
 const statusMsg = document.getElementById('statusMsg');
+const installBanner = document.getElementById('installBanner');
+const installText = document.getElementById('installText');
+const installBtn = document.getElementById('installBtn');
+const installDismiss = document.getElementById('installDismiss');
 
 const SUPABASE_URL = window.SUPABASE_URL || 'https://qmidagpgbgxcccohzesi.supabase.co';
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_yvSam6PenOMjnJkeT7zmlA_w0V65RN0';
 const ACTIVE_TAB_ID_KEY = 'bayt_tab_id';
 const ACTIVE_TAB_CODE_KEY = 'bayt_tab_code';
+const INSTALL_DISMISS_KEY = 'bayt_install_dismissed';
 
 let supabaseClient = null;
 let realtimeChannel = null;
@@ -553,6 +602,7 @@ let bannerTone = 'info';
 let bannerMessage = '';
 let recentLocalIds = new Set();
 let busy = false;
+let deferredInstallPrompt = null;
 
 CATEGORIES.forEach(c=>{
   const opt = document.createElement('option');
@@ -1375,6 +1425,7 @@ document.addEventListener('click', (e)=>{
 });
 
 async function boot(){
+  setupPwa();
   try{
     if(!hasSupabaseConfig()){
       setBanner('بيانات Supabase ناقصة.', 'error');
@@ -1407,6 +1458,92 @@ async function boot(){
     console.error(e);
     setBanner('تعذر الاتصال بـ Supabase. تأكد إنك شغّلت schema.sql', 'error');
     render();
+  }
+}
+
+function isStandaloneApp(){
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    window.navigator.standalone === true;
+}
+
+function isIosDevice(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent || '') ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isInstallDismissed(){
+  try{
+    const raw = localStorage.getItem(INSTALL_DISMISS_KEY);
+    if(!raw) return false;
+    const ts = Number(raw);
+    if(!Number.isFinite(ts)) return false;
+    return Date.now() - ts < 14 * 24 * 60 * 60 * 1000;
+  }catch(e){
+    return false;
+  }
+}
+
+function dismissInstallBanner(){
+  try{ localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); }catch(e){}
+  installBanner.classList.add('hidden');
+}
+
+function showInstallBanner(mode){
+  if(isStandaloneApp() || isInstallDismissed()){
+    installBanner.classList.add('hidden');
+    return;
+  }
+  installBanner.classList.remove('hidden');
+  installBanner.classList.toggle('ios', mode === 'ios');
+  if(mode === 'ios'){
+    installText.textContent = 'على آيفون: اضغط مشاركة ثم "إضافة إلى الشاشة الرئيسية".';
+  }else{
+    installText.textContent = 'ثبّت التطبيق على جهازك للوصول السريع بدون المتصفح.';
+  }
+}
+
+function setupPwa(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw-bayt.js').catch((err)=>{
+      console.warn('Service worker registration failed', err);
+    });
+  }
+
+  if(isStandaloneApp()){
+    installBanner.classList.add('hidden');
+    return;
+  }
+
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    showInstallBanner('android');
+  });
+
+  window.addEventListener('appinstalled', ()=>{
+    deferredInstallPrompt = null;
+    installBanner.classList.add('hidden');
+    setStatus('اتثبت التطبيق', 2500);
+  });
+
+  installBtn.addEventListener('click', async ()=>{
+    if(!deferredInstallPrompt){
+      showInstallBanner(isIosDevice() ? 'ios' : 'android');
+      return;
+    }
+    deferredInstallPrompt.prompt();
+    try{
+      await deferredInstallPrompt.userChoice;
+    }catch(e){}
+    deferredInstallPrompt = null;
+    installBanner.classList.add('hidden');
+  });
+
+  installDismiss.addEventListener('click', dismissInstallBanner);
+
+  if(isIosDevice() && !isStandaloneApp()){
+    window.setTimeout(()=> showInstallBanner('ios'), 1200);
   }
 }
 
